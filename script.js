@@ -97,3 +97,36 @@ function tampilkanHasil(data) {
     <p style="color:green;font-style:italic;">✅ Disimpan di cache browser (offline)</p>
   `;
 }
+function receiveDataFromFlutter(data) {
+  if (!window.flutterReady) {
+    console.warn("⏳ Halaman belum siap, simpan data sementara...");
+    window.flutterBuffer.push(data);
+    return;
+  }
+
+  try {
+    if (typeof data === "string") {
+      data = JSON.parse(data);
+    }
+
+    console.log("📥 Data diterima dari Flutter:", data);
+
+    const container = document.getElementById("flutter-data-container");
+    if (!container) {
+      console.warn("⚠️ Elemen #flutter-data-container belum ditemukan!");
+      return;
+    }
+    container.innerHTML = data;
+
+    window.flutterReceivedData = data;
+
+    if (window.flutter_inappwebview) {
+      window.flutter_inappwebview.callHandler("onDataReceived", {
+        status: "ok",
+        count: Array.isArray(data) ? data.length : 0,
+      });
+    }
+  } catch (error) {
+    console.error("❌ Gagal parsing data dari Flutter:", error);
+  }
+}
