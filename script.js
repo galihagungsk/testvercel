@@ -2,29 +2,23 @@ const form = document.getElementById("formKredit");
 const hasilDiv = document.getElementById("hasil");
 const jenisSelect = document.getElementById("jenis");
 const modelSelect = document.getElementById("model");
+const resetBtn = document.getElementById("resetCache");
 
 const daftarModel = {
   mobil: ["Ertiga", "XL7", "Grand Vitara", "Fronx"],
   motor: ["Nex II", "GSX-S", "GSX-R", "Address"],
 };
 
-// Saat halaman dimuat, ambil data dari localStorage
+// Load dari localStorage saat buka ulang
 window.onload = () => {
-  try {
-    const cache = localStorage.getItem("dataKredit");
-    if (cache) {
-      const data = JSON.parse(cache);
-      tampilkanHasil(data);
-    }
-  } catch (err) {
-    console.log("⚠️ Gagal membaca cache:", err);
-  }
+  const cache = localStorage.getItem("dataKredit");
+  if (cache) tampilkanHasil(JSON.parse(cache));
 };
 
+// Dropdown model
 jenisSelect.addEventListener("change", () => {
   const jenis = jenisSelect.value;
   modelSelect.innerHTML = '<option value="">-- Pilih Model --</option>';
-
   if (jenis && daftarModel[jenis]) {
     daftarModel[jenis].forEach((model) => {
       const opt = document.createElement("option");
@@ -35,6 +29,7 @@ jenisSelect.addEventListener("change", () => {
   }
 });
 
+// Hitung hasil
 form.addEventListener("submit", (e) => {
   e.preventDefault();
 
@@ -48,7 +43,7 @@ form.addEventListener("submit", (e) => {
   const tenor = parseInt(document.getElementById("tenor").value);
 
   if (!harga || !dpPersen || dpPersen >= 100 || !tenor) {
-    alert("Pastikan semua data benar!");
+    alert("⚠️ Pastikan semua data benar!");
     return;
   }
 
@@ -71,13 +66,14 @@ form.addEventListener("submit", (e) => {
     cicilanBulanan,
   };
 
-  try {
-    localStorage.setItem("dataKredit", JSON.stringify(hasil));
-  } catch (err) {
-    console.log("⚠️ Gagal simpan cache:", err);
-  }
-
+  localStorage.setItem("dataKredit", JSON.stringify(hasil));
   tampilkanHasil(hasil);
+});
+
+// Reset cache
+resetBtn.addEventListener("click", () => {
+  localStorage.removeItem("dataKredit");
+  hasilDiv.innerHTML = "<p style='color:red;'>🗑️ Data cache dihapus.</p>";
 });
 
 function tampilkanHasil(data) {
@@ -91,13 +87,13 @@ function tampilkanHasil(data) {
     }%):</strong> Rp ${data.dpNominal.toLocaleString("id-ID")}</p>
     <p><strong>Tenor:</strong> ${data.tenor} bulan</p>
     <p><strong>Bunga:</strong> ${data.bunga}%</p>
-    <p><strong>Cicilan per Bulan:</strong> Rp ${data.cicilanBulanan.toLocaleString(
+    <p><strong>Cicilan/Bulan:</strong> Rp ${data.cicilanBulanan.toLocaleString(
       "id-ID"
     )}</p>
     <hr>
     <p><strong>Nama:</strong> ${data.nama}</p>
     <p><strong>No. Telepon:</strong> ${data.telepon}</p>
     <p><strong>Alamat:</strong> ${data.alamat}</p>
-    <p style="color: green; font-style: italic;">✅ Data disimpan di cache lokal (offline mode)</p>
+    <p style="color:green;font-style:italic;">✅ Disimpan di cache browser (offline)</p>
   `;
 }

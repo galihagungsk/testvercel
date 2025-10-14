@@ -1,61 +1,49 @@
-const CACHE_NAME = "simulasi-kredit-online-v3";
+const CACHE_NAME = "simulasi-kredit-v1";
 const FILES_TO_CACHE = [
-  "./", // index.html
+  "./",
   "./index.html",
   "./style.css",
   "./script.js",
   "./manifest.json",
 ];
 
-// Saat install: cache semua file statis
-self.addEventListener("install", (event) => {
+self.addEventListener("install", (e) => {
   console.log("📦 Service Worker: Install");
-  event.waitUntil(
+  e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
   );
   self.skipWaiting();
 });
 
-// Saat activate: hapus cache lama
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", (e) => {
   console.log("🔁 Service Worker: Activate");
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log("🧹 Menghapus cache lama:", key);
-            return caches.delete(key);
-          }
-        })
+  e.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.map((key) => key !== CACHE_NAME && caches.delete(key)))
       )
-    )
   );
   self.clients.claim();
 });
 
-// Saat fetch: ambil dari cache dulu, baru jaringan
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
+self.addEventListener("fetch", (e) => {
+  e.respondWith(
+    caches.match(e.request).then((res) => {
       return (
-        response ||
-        fetch(event.request)
+        res ||
+        fetch(e.request)
           .then((fetchRes) => {
-            // Simpan hasil fetch baru ke cache
+            // Abaikan permintaan ekstensi
+            if (e.request.url.startsWith("chrome-extension://"))
+              return fetchRes;
             return caches.open(CACHE_NAME).then((cache) => {
-              // ❌ Abaikan request dari ekstensi Chrome
-              if (event.request.url.startsWith("chrome-extension://")) {
-                return fetchRes;
-              }
-
-              // ✅ Simpan hanya file dari web kamu
-              cache.put(event.request, fetchRes.clone());
+              cache.put(e.request, fetchRes.clone());
               return fetchRes;
             });
           })
           .catch(() => caches.match("./index.html"))
-      ); // fallback kalau offline
+      );
     })
   );
 });

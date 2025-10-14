@@ -6,23 +6,22 @@
     <title>Simulasi Kredit</title>
     <link rel="stylesheet" href="style.css" />
 
-    <!-- Manifest tanpa ikon -->
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#4CAF50" />
   </head>
   <body>
     <div class="container">
-      <h1>Form Simulasi Kredit Sederhana</h1>
+      <h1>💸 Simulasi Kredit</h1>
       <p>
-        Website ini tetap bisa digunakan <strong>offline</strong> baik di
-        browser maupun Android WebView.
+        Aplikasi ini dapat digunakan <strong>offline</strong> setelah satu kali
+        dibuka online.
       </p>
 
       <form id="formKredit">
         <label>Nama:</label>
         <input type="text" id="nama" required />
 
-        <label>No. telepon:</label>
+        <label>No. Telepon:</label>
         <input type="text" id="telepon" required />
 
         <label>Alamat:</label>
@@ -55,6 +54,13 @@
         </select>
 
         <button type="submit">Hitung</button>
+        <button
+          type="button"
+          id="resetCache"
+          style="background-color: #d9534f; margin-left: 10px"
+        >
+          Hapus Data
+        </button>
       </form>
 
       <div id="hasil"></div>
@@ -62,42 +68,17 @@
 
     <script src="script.js"></script>
 
-    <!-- ✅ Registrasi Service Worker -->
+    <!-- ✅ Service Worker Registration -->
     <script>
-      const isWebView =
-        navigator.userAgent.includes("wv") ||
-        navigator.userAgent.includes("Android WebView");
-
-      // Jika bukan WebView, aktifkan Service Worker
-      if ("serviceWorker" in navigator && !isWebView) {
+      if ("serviceWorker" in navigator) {
         navigator.serviceWorker
           .register("service-worker.js")
-          .then((reg) => console.log("✅ SW aktif:", reg.scope))
+          .then((reg) => console.log("✅ Service Worker terdaftar:", reg.scope))
           .catch((err) => console.error("❌ Gagal daftar SW:", err));
-      } else {
-        console.log("ℹ️ Mode WebView: Service Worker mungkin tidak aktif");
       }
 
-      // ✅ Fallback offline pakai localStorage (untuk WebView lama)
-      window.addEventListener("load", () => {
-        if (!("serviceWorker" in navigator)) {
-          console.log(
-            "⚠️ Service Worker tidak didukung, menggunakan fallback."
-          );
-          const html = document.documentElement.outerHTML;
-          localStorage.setItem("backupPage", html);
-        }
-      });
-
-      // Saat offline, tampilkan backup halaman
       window.addEventListener("offline", () => {
-        const backup = localStorage.getItem("backupPage");
-        if (backup) {
-          document.open();
-          document.write(backup);
-          document.close();
-          console.log("📦 Memuat halaman dari cache lokal (fallback)");
-        }
+        console.log("⚠️ Mode offline aktif");
       });
     </script>
   </body>

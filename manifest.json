@@ -1,9 +1,8 @@
 {
   "name": "Simulasi Kredit",
   "short_name": "Kredit",
-  "description": "Aplikasi simulasi kredit sederhana yang berjalan offline.",
-  "start_url": "/simulasi_kredit/index.html",
-  "scope": "/simulasi_kredit/",
+  "description": "Aplikasi simulasi kredit sederhana yang bisa berjalan offline.",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
