@@ -1,21 +1,46 @@
+// ===============================
+// 🔧 Inisialisasi & Variabel
+// ===============================
 const form = document.getElementById("formKredit");
 const hasilDiv = document.getElementById("hasil");
 const jenisSelect = document.getElementById("jenis");
 const modelSelect = document.getElementById("model");
 const resetBtn = document.getElementById("resetCache");
+const container = document.getElementById("flutter-data-container");
 
 const daftarModel = {
   mobil: ["Ertiga", "XL7", "Grand Vitara", "Fronx"],
   motor: ["Nex II", "GSX-S", "GSX-R", "Address"],
 };
 
-// Load dari localStorage saat buka ulang
-window.onload = () => {
-  const cache = localStorage.getItem("dataKredit");
-  if (cache) tampilkanHasil(JSON.parse(cache));
-};
+// ===============================
+// 📦 Load cache lokal saat halaman dibuka
+// ===============================
+window.addEventListener("load", () => {
+  console.log("🌐 Halaman dimuat");
 
-// Dropdown model
+  // Tampilkan data cache jika ada
+  const cache = localStorage.getItem("dataKredit");
+  if (cache) {
+    tampilkanHasil(JSON.parse(cache));
+  }
+
+  // Kirim sinyal ke Flutter bahwa web sudah siap menerima data
+  if (window.flutter_inappwebview) {
+    window.flutter_inappwebview.callHandler("onWebReady");
+    console.log("✅ Mengirim sinyal onWebReady ke Flutter");
+  } else {
+    console.warn("⚠️ flutter_inappwebview belum terdeteksi");
+  }
+
+  // Tandai halaman siap
+  window.flutterReady = true;
+  window.flutterBuffer = [];
+});
+
+// ===============================
+// 🚗 Dropdown dinamis
+// ===============================
 jenisSelect.addEventListener("change", () => {
   const jenis = jenisSelect.value;
   modelSelect.innerHTML = '<option value="">-- Pilih Model --</option>';
@@ -29,7 +54,9 @@ jenisSelect.addEventListener("change", () => {
   }
 });
 
-// Hitung hasil
+// ===============================
+// 💰 Hitung simulasi kredit
+// ===============================
 form.addEventListener("submit", (e) => {
   e.preventDefault();
 
@@ -68,14 +95,25 @@ form.addEventListener("submit", (e) => {
 
   localStorage.setItem("dataKredit", JSON.stringify(hasil));
   tampilkanHasil(hasil);
+
+  // Kirim hasil ke Flutter
+  if (window.flutter_inappwebview) {
+    window.flutter_inappwebview.callHandler("jawaban", JSON.stringify(hasil));
+    console.log("📤 Data dikirim ke Flutter:", hasil);
+  }
 });
 
-// Reset cache
+// ===============================
+// 🧹 Reset cache
+// ===============================
 resetBtn.addEventListener("click", () => {
   localStorage.removeItem("dataKredit");
   hasilDiv.innerHTML = "<p style='color:red;'>🗑️ Data cache dihapus.</p>";
 });
 
+// ===============================
+// 🧾 Fungsi tampilkan hasil
+// ===============================
 function tampilkanHasil(data) {
   hasilDiv.innerHTML = `
     <h3>📋 Hasil Simulasi Kredit</h3>
@@ -97,36 +135,36 @@ function tampilkanHasil(data) {
     <p style="color:green;font-style:italic;">✅ Disimpan di cache browser (offline)</p>
   `;
 }
-function receiveDataFromFlutter(data) {
-  if (!window.flutterReady) {
-    console.warn("⏳ Halaman belum siap, simpan data sementara...");
-    window.flutterBuffer.push(data);
-    return;
-  }
 
+// ===============================
+// 🔁 Terima data dari Flutter
+// ===============================
+function receiveDataFromFlutter(data) {
   try {
+    console.log("📩 Menerima data dari Flutter:", data);
+
+    // Jika data dikirim dalam bentuk string JSON, parse dulu
     if (typeof data === "string") {
       data = JSON.parse(data);
     }
 
-    console.log("📥 Data diterima dari Flutter:", data);
-
-    const container = document.getElementById("flutter-data-container");
-    if (!container) {
-      console.warn("⚠️ Elemen #flutter-data-container belum ditemukan!");
-      return;
+    // Tampilkan hasil di halaman
+    if (container) {
+      container.innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
     }
-    container.innerHTML = data;
 
+    // Simpan ke variabel global jika dibutuhkan
     window.flutterReceivedData = data;
 
+    // Konfirmasi kembali ke Flutter
     if (window.flutter_inappwebview) {
       window.flutter_inappwebview.callHandler("onDataReceived", {
         status: "ok",
-        count: Array.isArray(data) ? data.length : 0,
+        count: Array.isArray(data) ? data.length : Object.keys(data).length,
       });
+      console.log("✅ Konfirmasi dikirim ke Flutter");
     }
   } catch (error) {
-    console.error("❌ Gagal parsing data dari Flutter:", error);
+    console.error("❌ Gagal parsing data dari Flutter:", error, data);
   }
 }
