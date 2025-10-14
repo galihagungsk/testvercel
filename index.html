@@ -5,66 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Simulasi Kredit</title>
     <link rel="stylesheet" href="style.css" />
-
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#4CAF50" />
   </head>
+
   <body>
     <div class="container">
-      <h1>💸 Simulasi Kredit</h1>
-      <p>
-        Aplikasi ini dapat digunakan <strong>offline</strong> setelah satu kali
-        dibuka online.
-      </p>
-
-      <form id="formKredit">
-        <label>Nama:</label>
-        <input type="text" id="nama" required />
-
-        <label>No. Telepon:</label>
-        <input type="text" id="telepon" required />
-
-        <label>Alamat:</label>
-        <textarea id="alamat" required></textarea>
-
-        <label>Jenis Pembelian:</label>
-        <select id="jenis" required>
-          <option value="">-- Pilih Jenis --</option>
-          <option value="mobil">Mobil</option>
-          <option value="motor">Motor</option>
-        </select>
-
-        <label>Model:</label>
-        <select id="model" required>
-          <option value="">-- Pilih Model --</option>
-        </select>
-
-        <label>Harga OTR (Rp):</label>
-        <input type="number" id="harga" required />
-
-        <label>DP (%):</label>
-        <input type="number" id="dp" required />
-
-        <label>Tenor (bulan):</label>
-        <select id="tenor" required>
-          <option value="">-- Pilih Tenor --</option>
-          <option value="12">12 Bulan</option>
-          <option value="24">24 Bulan</option>
-          <option value="36">36 Bulan</option>
-        </select>
-
-        <button type="submit">Hitung</button>
-        <button
-          type="button"
-          id="resetCache"
-          style="background-color: #d9534f; margin-left: 10px"
-        >
-          Hapus Data
-        </button>
-      </form>
-
-      <div id="hasil"></div>
-
+      <h1>Survey</h1>
       <div
         id="flutter-data-container"
         style="padding: 10px; background: #f7f7f7; font-family: monospace"
@@ -73,7 +20,6 @@
 
     <script src="script.js"></script>
 
-    <!-- ✅ Service Worker Registration -->
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
