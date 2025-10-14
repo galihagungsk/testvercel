@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulasi Kredit</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Manifest tanpa ikon -->
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#4CAF50" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Form Simulasi Kredit Sederhana</h1>
+      <p>
+        Website ini tetap bisa digunakan <strong>offline</strong> baik di
+        browser maupun Android WebView.
+      </p>
+
+      <form id="formKredit">
+        <label>Nama:</label>
+        <input type="text" id="nama" required />
+
+        <label>No. telepon:</label>
+        <input type="text" id="telepon" required />
+
+        <label>Alamat:</label>
+        <textarea id="alamat" required></textarea>
+
+        <label>Jenis Pembelian:</label>
+        <select id="jenis" required>
+          <option value="">-- Pilih Jenis --</option>
+          <option value="mobil">Mobil</option>
+          <option value="motor">Motor</option>
+        </select>
+
+        <label>Model:</label>
+        <select id="model" required>
+          <option value="">-- Pilih Model --</option>
+        </select>
+
+        <label>Harga OTR (Rp):</label>
+        <input type="number" id="harga" required />
+
+        <label>DP (%):</label>
+        <input type="number" id="dp" required />
+
+        <label>Tenor (bulan):</label>
+        <select id="tenor" required>
+          <option value="">-- Pilih Tenor --</option>
+          <option value="12">12 Bulan</option>
+          <option value="24">24 Bulan</option>
+          <option value="36">36 Bulan</option>
+        </select>
+
+        <button type="submit">Hitung</button>
+      </form>
+
+      <div id="hasil"></div>
+    </div>
+
+    <script src="script.js"></script>
+
+    <!-- ✅ Registrasi Service Worker -->
+    <script>
+      const isWebView =
+        navigator.userAgent.includes("wv") ||
+        navigator.userAgent.includes("Android WebView");
+
+      // Jika bukan WebView, aktifkan Service Worker
+      if ("serviceWorker" in navigator && !isWebView) {
+        navigator.serviceWorker
+          .register("service-worker.js")
+          .then((reg) => console.log("✅ SW aktif:", reg.scope))
+          .catch((err) => console.error("❌ Gagal daftar SW:", err));
+      } else {
+        console.log("ℹ️ Mode WebView: Service Worker mungkin tidak aktif");
+      }
+
+      // ✅ Fallback offline pakai localStorage (untuk WebView lama)
+      window.addEventListener("load", () => {
+        if (!("serviceWorker" in navigator)) {
+          console.log(
+            "⚠️ Service Worker tidak didukung, menggunakan fallback."
+          );
+          const html = document.documentElement.outerHTML;
+          localStorage.setItem("backupPage", html);
+        }
+      });
+
+      // Saat offline, tampilkan backup halaman
+      window.addEventListener("offline", () => {
+        const backup = localStorage.getItem("backupPage");
+        if (backup) {
+          document.open();
+          document.write(backup);
+          document.close();
+          console.log("📦 Memuat halaman dari cache lokal (fallback)");
+        }
+      });
+    </script>
+  </body>
+</html>
