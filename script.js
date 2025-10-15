@@ -67,7 +67,7 @@ function tampilkanHasil(data, container) {
             <small>${submission.submit_message || ""}</small>
           </div>
           <div class="time-info">
-            <strong>${submission.submission_date || "-"}</strong><br>
+            <strong>${submission.submit_date || "-"}</strong><br>
             <small>97 Hari 2 jam 10 menit</small>
           </div>
         </div>
@@ -101,18 +101,36 @@ function tampilkanHasil(data, container) {
     card.addEventListener("click", () => {
       const id = card.getAttribute("data-id");
       const submission = data.process.find((s) => s.submission_id == id);
-      const dataForm = data.form.find((f) => f.data[0].submission_id == id);
-      // const dataFref = data.fref.find((f) => f.data[0].submission_id == id);
+      const selectedForm = Array.isArray(data.form)
+        ? data.form.find(
+            (f) =>
+              // cari di f.data
+              f.data?.some((d) => d.submission_id == id) ||
+              // cari di f.pages[*].questionGroups[*].questions[*]
+              f.pages?.some((p) =>
+                p.questionGroups?.some((g) =>
+                  g.questions?.some((q) => q.submission_id == id)
+                )
+              )
+          )
+        : null;
+
       const dataPertanyaan = data.pertanyaan;
       const dataOpsi = data.opsi_jawaban;
-      if (submission) {
+
+      if (submission && selectedForm) {
         tampilkanDetail(
           submission,
           container,
-          dataForm,
+          selectedForm,
           dataPertanyaan,
           dataOpsi
         );
+      } else {
+        container.innerHTML = `
+          <p>⚠️ Data dengan submission_id ${id} tidak ditemukan di form.</p>
+          <button onclick="tampilkanHasil(data, container)">⬅ Kembali</button>
+        `;
       }
     });
   });
@@ -128,173 +146,224 @@ function tampilkanDetail(
   dataPertanyaan,
   dataOpsi
 ) {
-  // Reset isi container
+  // 🔹 Reset container
   container.innerHTML = `
     <button id="btnBack" style="background:#4caf50;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;margin-bottom:12px;">⬅ Kembali</button>
     <h2>Detail ID ${submission.submission_id}</h2>
-    <p><strong>Tanggal Submit:</strong> ${submission.submission_date}</p>
-    <p><strong>Pesan:</strong> ${submission.submit_message}</p>
+    <p><strong>Tanggal Submit:</strong> ${submission.submission_date || "-"}</p>
+    <p><strong>Pesan:</strong> ${submission.submit_message || "-"}</p>
     <div id="formContainer" style="margin-top:10px;"></div>
   `;
 
   const formContainer = container.querySelector("#formContainer");
+  const formData = Array.isArray(dataForm) ? dataForm[0] : dataForm;
+  if (!formData?.pages) {
+    formContainer.innerHTML = `<p>⚠️ Tidak ada struktur form untuk submission ini.</p>`;
+    return;
+  }
 
-  // ==========================
-  // 🔹 Fungsi Helper getValue
-  // ==========================
+  // 🔹 Simpan data value sementara
+  let currentData = formData.data ? [...formData.data] : [];
+
+  // ======================================================
+  // 🔹 Helper: ambil nilai pertanyaan
+  // ======================================================
   function getValue(question, data) {
     if (!question || !data) return null;
-    const found = data.find((d) => d.questionId === question.questionId);
+    const found = data.find((d) => d.question_id === question.question_id);
     return found ? found.value : null;
   }
-  // Cari dataForm yang mempunyai id sama dengan submission.submission_id
-  if (Array.isArray(dataForm)) {
-    dataForm =
-      dataForm.find(
-        (f) =>
-          f.data &&
-          f.data[0] &&
-          f.data[0].submission_id == submission.submission_id
-      ) || dataForm[0];
-    console.log("Cek data form yang sesuai:", dataForm);
+
+  // ======================================================
+  // 🔹 Logika decision seperti di Flutter
+  // ======================================================
+  function isVisibleDicission(page, groupId, data) {
+    if (!page || !groupId) return true;
+
+    const dicissions = page.dicissions || [];
+    if (!Array.isArray(dicissions) || dicissions.length === 0) return true;
+
+    let result = true;
+    const related = dicissions.filter((d) => d.group_id === groupId);
+    if (related.length === 0) return true;
+
+    for (const dic of related) {
+      const sourceGroup = page.questionGroups?.find(
+        (g) => g.group_id === dic.dicission_group_id
+      );
+      const sourceQuestion = sourceGroup?.questions?.find(
+        (q) => q.question_id === dic.dicission_question_id
+      );
+      const refValue = getValue(sourceQuestion, data);
+
+      switch (dic.dicission_type) {
+        case 402:
+        case "equal":
+          if (
+            refValue == dic.dicission_value ||
+            (refValue ?? ":::").split(":")[0] == dic.dicission_value
+          ) {
+            result = result;
+          } else {
+            result = false;
+          }
+          break;
+
+        case 403:
+        case "notEqual":
+          if (
+            refValue != dic.dicission_value &&
+            (refValue ?? ":::").split(":")[0] != dic.dicission_value
+          ) {
+            result = result;
+          } else {
+            result = false;
+          }
+          break;
+
+        default:
+          result = result;
+      }
+
+      if (!result) break; // hentikan loop lebih cepat
+    }
+
+    return result;
   }
 
-  // // =======================================
-  // // 🔹 Fungsi utama untuk cek visibility
-  // // =======================================
-  // function isVisibleDicission(page, groupId, data, dataDecision) {
-  //   if (!page || !groupId) return true; // Jika tidak ada data, tampilkan group
-  //   console.log("Cek Data Decision adakah:", page.decisions);
+  // ======================================================
+  // 🔹 Render form dinamis
+  // ======================================================
+  formData.pages.forEach((page) => {
+    const pageElement = document.createElement("div");
+    pageElement.classList.add("page-section");
+    pageElement.innerHTML = `<h3 style="margin-top:16px;">📄 ${
+      page.name || "Tanpa Nama"
+    }</h3>`;
 
-  //   let result = true;
-  //   let decision = page.decisions.find((d) => d.groupId === groupId);
-  //   if (decision !== null && decision !== undefined) {
-  //     return false; // Jika decision tidak null, jangan tampilkan group
-  //   }
-  //   return result; // Jika tidak ada decision, tampilkan group
-  // }
+    page.questionGroups?.forEach((group) => {
+      const groupElement = document.createElement("div");
+      groupElement.classList.add("group-card");
+      groupElement.dataset.groupId = group.group_id;
+      groupElement.style.cssText = `
+        background:#fff;border:1px solid #ddd;border-radius:8px;
+        padding:16px;margin-top:10px;box-shadow:0 1px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+      `;
 
-  // // 🔧 Fungsi bantu untuk mengambil nilai dari data submission
-  // function getValue(question, data) {
-  //   if (!question || !data) return null;
-  //   const found = data.find((d) => d.question_id === question.question_id);
-  //   return found ? found.value : null;
-  // }
+      let questionHTML = `<h4 style="margin-bottom:10px;">${group.name}</h4>`;
 
-  // // ==============================
-  // // 🔹 Loop semua pages dalam form
-  // // ==============================
-  // let dicissionData = dataForm || [];
-  // console.log("Cek data decision di form:", dicissionData);
-  // dataForm.pages.forEach((page) => {
-  //   const pageElement = document.createElement("div");
-  //   pageElement.classList.add("page-section");
-  //   pageElement.innerHTML = `
-  //     <h3 style="margin-top:16px;">📄 ${page.name}</h3>
-  //   `;
+      (group.questions || []).forEach((q) => {
+        const required =
+          q.mandatory === 1 ? "<span style='color:red;'>*</span>" : "";
+        const label = `<label for="${q.code}">${
+          q.label || q.name || "Tanpa Label"
+        }${required}</label>`;
+        const currentValue = getValue(q, currentData) || q.value || "";
 
-  //   // ============================
-  //   // 🔹 Loop setiap QuestionGroup
-  //   // ============================
+        let inputField = "";
+        switch (q.type) {
+          case "dropdown":
+            const opsiCollection = (dataOpsi || []).filter(
+              (opt) => opt.collection_id === q.collection_id
+            );
+            const opsiDropdown = opsiCollection
+              .map(
+                (opt) =>
+                  `<option value="${opt.value}" ${
+                    opt.value === currentValue ? "selected" : ""
+                  }>${opt.label}</option>`
+              )
+              .join("");
 
-  //   page.questionGroups.forEach((group) => {
-  //     // 🔍 Cek visibilitas dengan isVisibleDicission
-  //     const visible = isVisibleDicission(
-  //       page,
-  //       group.groupId,
-  //       dataPertanyaan,
-  //       dataForm.decisions
-  //     );
-  //     // console.log("Menampilkan status Visibility:", group.name, visible);
-  //     // console.log("cek data decision:", page.decisions);
+            inputField = `
+              <select id="${q.code}" name="${q.code}" data-question-id="${q.question_id}" data-group-id="${group.group_id}">
+                <option value="">Harap Pilih</option>
+                ${opsiDropdown}
+              </select>
+            `;
+            break;
 
-  //     // Jika tidak visible, skip render
-  //     if (!visible) return;
+          case "foto":
+            inputField = `
+              <div>
+                <input type="file" id="${q.code}" name="${
+              q.code
+            }" accept="image/*" capture="camera" />
+                <p style="font-size:12px;color:#666;">${q.hint || ""}</p>
+              </div>
+            `;
+            break;
 
-  //     const groupElement = document.createElement("div");
-  //     groupElement.classList.add("group-card");
-  //     groupElement.style.cssText = `
-  //       background:#fff;
-  //       border:1px solid #ddd;
-  //       border-radius:8px;
-  //       padding:16px;
-  //       margin-top:10px;
-  //       box-shadow:0 1px 4px rgba(0,0,0,0.1);
-  //     `;
+          default:
+            inputField = `
+              <input type="text" id="${q.code}" name="${q.code}" 
+                placeholder="${q.hint || ""}" value="${currentValue}" />
+            `;
+        }
 
-  //     let questionHTML = `
-  //       <h4 style="margin-bottom:10px;">${group.name}</h4>
-  //       <form class="form-group-container">
-  //     `;
+        questionHTML += `
+          <div class="form-group" style="margin-bottom:12px;">
+            ${label}
+            ${inputField}
+          </div>
+        `;
+      });
 
-  //     // ============================
-  //     // 🔹 Loop setiap pertanyaan
-  //     // ============================
-  //     group.questions.forEach((q) => {
-  //       const required =
-  //         q.mandatory === 1 ? "<span style='color:red;'>*</span>" : "";
-  //       const label = `<label for="${q.code}">${q.label}${required}</label>`;
+      groupElement.innerHTML = questionHTML;
+      pageElement.appendChild(groupElement);
+    });
 
-  //       let inputField = "";
+    formContainer.appendChild(pageElement);
+  });
 
-  //       switch (q.type) {
-  //         case "dropdown":
-  //           // 🔹 Filter opsi berdasarkan collection_id
-  //           const opsiCollection = (dataOpsi || []).filter(
-  //             (opt) => opt.collection_id === q.collection_id
-  //           );
+  // ======================================================
+  // 🔹 Evaluasi awal (fix bug tampilan awal)
+  // ======================================================
+  function evaluateVisibilityAll() {
+    formData.pages.forEach((page) => {
+      page.questionGroups?.forEach((group) => {
+        const groupEl = formContainer.querySelector(
+          `[data-group-id="${group.group_id}"]`
+        );
+        if (!groupEl) return;
+        const visible = isVisibleDicission(page, group.group_id, currentData);
+        if (visible) {
+          groupEl.style.display = "block";
+          groupEl.style.opacity = 1;
+        } else {
+          groupEl.style.opacity = 0;
+          setTimeout(() => (groupEl.style.display = "none"), 200);
+        }
+      });
+    });
+  }
 
-  //           // 🔹 Buat HTML <option>
-  //           const opsiDropdown = opsiCollection
-  //             .map(
-  //               (opt) => `<option value="${opt.value}">${opt.label}</option>`
-  //             )
-  //             .join("");
+  // Jalankan evaluasi pertama (awal buka form)
+  evaluateVisibilityAll();
 
-  //           inputField = `
-  //       <select id="${q.code}" name="${q.code}">
-  //         <option value="">Harap Pilih</option>
-  //         ${opsiDropdown}
-  //       </select>
-  //     `;
-  //           break;
+  // ======================================================
+  // 🔹 Saat dropdown berubah, re-evaluasi decision
+  // ======================================================
+  formContainer.querySelectorAll("select").forEach((selectEl) => {
+    selectEl.addEventListener("change", (e) => {
+      const questionId = parseInt(selectEl.dataset.questionId);
+      const value = e.target.value;
 
-  //         case "text":
-  //           inputField = `<input type="text" id="${q.code}" name="${
-  //             q.code
-  //           }" placeholder="${q.hint || ""}" />`;
-  //           break;
+      const existing = currentData.find((d) => d.question_id === questionId);
+      if (existing) existing.value = value;
+      else currentData.push({ question_id: questionId, value });
 
-  //         case "foto":
-  //           inputField = `
-  //       <input type="file" id="${q.code}" name="${
-  //             q.code
-  //           }" accept="image/*" capture="camera" />
-  //       <p style="font-size:12px;color:#666;">${q.hint || ""}</p>
-  //     `;
-  //           break;
+      evaluateVisibilityAll(); // recheck semua group
+    });
+  });
 
-  //         default:
-  //           inputField = `<input type="text" id="${q.code}" name="${
-  //             q.code
-  //           }" placeholder="${q.hint || ""}" />`;
-  //       }
-
-  //       questionHTML += `
-  //   <div class="form-group" style="margin-bottom:12px;">
-  //     ${label}
-  //     ${inputField}
-  //   </div>
-  // `;
-  //     });
-
-  //     questionHTML += `</form>`;
-  //     groupElement.innerHTML = questionHTML;
-  //     pageElement.appendChild(groupElement);
-  //   });
-
-  //   formContainer.appendChild(pageElement);
-  // });
+  // ======================================================
+  // 🔙 Tombol kembali
+  // ======================================================
+  container.querySelector("#btnBack").addEventListener("click", () => {
+    tampilkanHasil(data, container);
+  });
 }
 
 // 🔙 tombol kembali → tampilkan list lagi
