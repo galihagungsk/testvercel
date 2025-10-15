@@ -152,33 +152,31 @@ function tampilkanDetail(
   // 🔹 Fungsi utama untuk cek visibility
   // =======================================
   function isVisibleDicission(page, groupId, data) {
-    if (!page || !groupId) return true;
+    if (!page || !groupId) return true; // Jika tidak ada data, tampilkan group
 
     let result = true;
-    const dicissions = (page.dicissions || []).filter(
-      (d) => d.groupId === groupId
-    );
+    const dicissions =
+      page.dicissions?.filter((e) => e.groupId === groupId) || [];
 
     for (const dic of dicissions) {
-      const questionGroup = (page.questionGroups || []).find(
-        (g) => g.groupId === dic.dicissionGroupId
+      // 🔍 Cari question referensi berdasarkan dicissionGroupId dan dicissionQuestionId
+      const refGroup = page.questionGroups?.find(
+        (g) => g.group_id === dic.dicissionGroupId
       );
-      if (!questionGroup) continue;
-
-      const question = (questionGroup.questions || []).find(
-        (q) => q.questionId === dic.dicissionQuestionId
+      const refQuestion = refGroup?.questions?.find(
+        (q) => q.question_id === dic.dicissionQuestionId
       );
-      if (!question) continue;
 
-      const refValue = getValue(question, data);
+      // 📦 Ambil nilai jawaban dari data
+      const refValue = getValue(refQuestion, data);
 
       switch (dic.dicissionType) {
         case "equal":
           if (
             refValue === dic.dicissionValue ||
-            String(refValue || ":::").split(":")[0] === dic.dicissionValue
+            (refValue ?? ":::").split(":")[0] === dic.dicissionValue
           ) {
-            // OK
+            result = result; // tetap true
           } else {
             result = false;
           }
@@ -187,19 +185,27 @@ function tampilkanDetail(
         case "notEqual":
           if (
             refValue !== dic.dicissionValue &&
-            String(refValue || ":::").split(":")[0] !== dic.dicissionValue
+            (refValue ?? ":::").split(":")[0] !== dic.dicissionValue
           ) {
-            // OK
+            result = result; // tetap true
           } else {
             result = false;
           }
           break;
-      }
 
-      if (!result) break;
+        default:
+          result = result;
+      }
     }
 
     return result;
+  }
+
+  // 🔧 Fungsi bantu untuk mengambil nilai dari data submission
+  function getValue(question, data) {
+    if (!question || !data) return null;
+    const found = data.find((d) => d.question_id === question.question_id);
+    return found ? found.value : null;
   }
 
   // ==============================
@@ -218,6 +224,7 @@ function tampilkanDetail(
     page.questionGroups.forEach((group) => {
       // 🔍 Cek visibilitas dengan isVisibleDicission
       const visible = isVisibleDicission(page, group.groupId, dataPertanyaan);
+      console.log("Menampilkan status Visibility:", group.name, visible);
 
       // Jika tidak visible, skip render
       if (!visible) return;
