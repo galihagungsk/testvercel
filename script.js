@@ -147,133 +147,154 @@ function tampilkanDetail(
     const found = data.find((d) => d.questionId === question.questionId);
     return found ? found.value : null;
   }
-
-  // =======================================
-  // 🔹 Fungsi utama untuk cek visibility
-  // =======================================
-  function isVisibleDicission(page, groupId, data) {
-    if (!page || !groupId) return true; // Jika tidak ada data, tampilkan group
-
-    let result = true;
-    let decision = page.decisions.find((d) => d.groupId === groupId);
-    if (decision !== null && decision !== undefined) {
-      return false; // Jika decision tidak null, jangan tampilkan group
-    }
-    return result; // Jika tidak ada decision, tampilkan group
+  // Cari dataForm yang mempunyai id sama dengan submission.submission_id
+  if (Array.isArray(dataForm)) {
+    dataForm =
+      dataForm.find(
+        (f) =>
+          f.data &&
+          f.data[0] &&
+          f.data[0].submission_id == submission.submission_id
+      ) || dataForm[0];
+    console.log("Cek data form yang sesuai:", dataForm);
   }
 
-  // 🔧 Fungsi bantu untuk mengambil nilai dari data submission
-  function getValue(question, data) {
-    if (!question || !data) return null;
-    const found = data.find((d) => d.question_id === question.question_id);
-    return found ? found.value : null;
-  }
+  // // =======================================
+  // // 🔹 Fungsi utama untuk cek visibility
+  // // =======================================
+  // function isVisibleDicission(page, groupId, data, dataDecision) {
+  //   if (!page || !groupId) return true; // Jika tidak ada data, tampilkan group
+  //   console.log("Cek Data Decision adakah:", page.decisions);
 
-  // ==============================
-  // 🔹 Loop semua pages dalam form
-  // ==============================
-  dataForm.pages.forEach((page) => {
-    const pageElement = document.createElement("div");
-    pageElement.classList.add("page-section");
-    pageElement.innerHTML = `
-      <h3 style="margin-top:16px;">📄 ${page.name}</h3>
-    `;
+  //   let result = true;
+  //   let decision = page.decisions.find((d) => d.groupId === groupId);
+  //   if (decision !== null && decision !== undefined) {
+  //     return false; // Jika decision tidak null, jangan tampilkan group
+  //   }
+  //   return result; // Jika tidak ada decision, tampilkan group
+  // }
 
-    // ============================
-    // 🔹 Loop setiap QuestionGroup
-    // ============================
-    page.questionGroups.forEach((group) => {
-      // 🔍 Cek visibilitas dengan isVisibleDicission
-      const visible = isVisibleDicission(page, group.groupId, dataPertanyaan);
-      console.log("Menampilkan status Visibility:", group.name, visible);
+  // // 🔧 Fungsi bantu untuk mengambil nilai dari data submission
+  // function getValue(question, data) {
+  //   if (!question || !data) return null;
+  //   const found = data.find((d) => d.question_id === question.question_id);
+  //   return found ? found.value : null;
+  // }
 
-      // Jika tidak visible, skip render
-      if (!visible) return;
+  // // ==============================
+  // // 🔹 Loop semua pages dalam form
+  // // ==============================
+  // let dicissionData = dataForm || [];
+  // console.log("Cek data decision di form:", dicissionData);
+  // dataForm.pages.forEach((page) => {
+  //   const pageElement = document.createElement("div");
+  //   pageElement.classList.add("page-section");
+  //   pageElement.innerHTML = `
+  //     <h3 style="margin-top:16px;">📄 ${page.name}</h3>
+  //   `;
 
-      const groupElement = document.createElement("div");
-      groupElement.classList.add("group-card");
-      groupElement.style.cssText = `
-        background:#fff;
-        border:1px solid #ddd;
-        border-radius:8px;
-        padding:16px;
-        margin-top:10px;
-        box-shadow:0 1px 4px rgba(0,0,0,0.1);
-      `;
+  //   // ============================
+  //   // 🔹 Loop setiap QuestionGroup
+  //   // ============================
 
-      let questionHTML = `
-        <h4 style="margin-bottom:10px;">${group.name}</h4>
-        <form class="form-group-container">
-      `;
+  //   page.questionGroups.forEach((group) => {
+  //     // 🔍 Cek visibilitas dengan isVisibleDicission
+  //     const visible = isVisibleDicission(
+  //       page,
+  //       group.groupId,
+  //       dataPertanyaan,
+  //       dataForm.decisions
+  //     );
+  //     // console.log("Menampilkan status Visibility:", group.name, visible);
+  //     // console.log("cek data decision:", page.decisions);
 
-      // ============================
-      // 🔹 Loop setiap pertanyaan
-      // ============================
-      group.questions.forEach((q) => {
-        const required =
-          q.mandatory === 1 ? "<span style='color:red;'>*</span>" : "";
-        const label = `<label for="${q.code}">${q.label}${required}</label>`;
+  //     // Jika tidak visible, skip render
+  //     if (!visible) return;
 
-        let inputField = "";
+  //     const groupElement = document.createElement("div");
+  //     groupElement.classList.add("group-card");
+  //     groupElement.style.cssText = `
+  //       background:#fff;
+  //       border:1px solid #ddd;
+  //       border-radius:8px;
+  //       padding:16px;
+  //       margin-top:10px;
+  //       box-shadow:0 1px 4px rgba(0,0,0,0.1);
+  //     `;
 
-        switch (q.type) {
-          case "dropdown":
-            // 🔹 Filter opsi berdasarkan collection_id
-            const opsiCollection = (dataOpsi || []).filter(
-              (opt) => opt.collection_id === q.collection_id
-            );
+  //     let questionHTML = `
+  //       <h4 style="margin-bottom:10px;">${group.name}</h4>
+  //       <form class="form-group-container">
+  //     `;
 
-            // 🔹 Buat HTML <option>
-            const opsiDropdown = opsiCollection
-              .map(
-                (opt) => `<option value="${opt.value}">${opt.label}</option>`
-              )
-              .join("");
+  //     // ============================
+  //     // 🔹 Loop setiap pertanyaan
+  //     // ============================
+  //     group.questions.forEach((q) => {
+  //       const required =
+  //         q.mandatory === 1 ? "<span style='color:red;'>*</span>" : "";
+  //       const label = `<label for="${q.code}">${q.label}${required}</label>`;
 
-            inputField = `
-        <select id="${q.code}" name="${q.code}">
-          <option value="">Harap Pilih</option>
-          ${opsiDropdown}
-        </select>
-      `;
-            break;
+  //       let inputField = "";
 
-          case "text":
-            inputField = `<input type="text" id="${q.code}" name="${
-              q.code
-            }" placeholder="${q.hint || ""}" />`;
-            break;
+  //       switch (q.type) {
+  //         case "dropdown":
+  //           // 🔹 Filter opsi berdasarkan collection_id
+  //           const opsiCollection = (dataOpsi || []).filter(
+  //             (opt) => opt.collection_id === q.collection_id
+  //           );
 
-          case "foto":
-            inputField = `
-        <input type="file" id="${q.code}" name="${
-              q.code
-            }" accept="image/*" capture="camera" />
-        <p style="font-size:12px;color:#666;">${q.hint || ""}</p>
-      `;
-            break;
+  //           // 🔹 Buat HTML <option>
+  //           const opsiDropdown = opsiCollection
+  //             .map(
+  //               (opt) => `<option value="${opt.value}">${opt.label}</option>`
+  //             )
+  //             .join("");
 
-          default:
-            inputField = `<input type="text" id="${q.code}" name="${
-              q.code
-            }" placeholder="${q.hint || ""}" />`;
-        }
+  //           inputField = `
+  //       <select id="${q.code}" name="${q.code}">
+  //         <option value="">Harap Pilih</option>
+  //         ${opsiDropdown}
+  //       </select>
+  //     `;
+  //           break;
 
-        questionHTML += `
-    <div class="form-group" style="margin-bottom:12px;">
-      ${label}
-      ${inputField}
-    </div>
-  `;
-      });
+  //         case "text":
+  //           inputField = `<input type="text" id="${q.code}" name="${
+  //             q.code
+  //           }" placeholder="${q.hint || ""}" />`;
+  //           break;
 
-      questionHTML += `</form>`;
-      groupElement.innerHTML = questionHTML;
-      pageElement.appendChild(groupElement);
-    });
+  //         case "foto":
+  //           inputField = `
+  //       <input type="file" id="${q.code}" name="${
+  //             q.code
+  //           }" accept="image/*" capture="camera" />
+  //       <p style="font-size:12px;color:#666;">${q.hint || ""}</p>
+  //     `;
+  //           break;
 
-    formContainer.appendChild(pageElement);
-  });
+  //         default:
+  //           inputField = `<input type="text" id="${q.code}" name="${
+  //             q.code
+  //           }" placeholder="${q.hint || ""}" />`;
+  //       }
+
+  //       questionHTML += `
+  //   <div class="form-group" style="margin-bottom:12px;">
+  //     ${label}
+  //     ${inputField}
+  //   </div>
+  // `;
+  //     });
+
+  //     questionHTML += `</form>`;
+  //     groupElement.innerHTML = questionHTML;
+  //     pageElement.appendChild(groupElement);
+  //   });
+
+  //   formContainer.appendChild(pageElement);
+  // });
 }
 
 // 🔙 tombol kembali → tampilkan list lagi
