@@ -155,50 +155,8 @@ function tampilkanDetail(
     if (!page || !groupId) return true; // Jika tidak ada data, tampilkan group
 
     let result = true;
-    const dicissions =
-      page.dicissions?.filter((e) => e.groupId === groupId) || [];
-
-    for (const dic of dicissions) {
-      // 🔍 Cari question referensi berdasarkan dicissionGroupId dan dicissionQuestionId
-      const refGroup = page.questionGroups?.find(
-        (g) => g.group_id === dic.dicissionGroupId
-      );
-      const refQuestion = refGroup?.questions?.find(
-        (q) => q.question_id === dic.dicissionQuestionId
-      );
-
-      // 📦 Ambil nilai jawaban dari data
-      const refValue = getValue(refQuestion, data);
-
-      switch (dic.dicissionType) {
-        case "equal":
-          if (
-            refValue === dic.dicissionValue ||
-            (refValue ?? ":::").split(":")[0] === dic.dicissionValue
-          ) {
-            result = result; // tetap true
-          } else {
-            result = false;
-          }
-          break;
-
-        case "notEqual":
-          if (
-            refValue !== dic.dicissionValue &&
-            (refValue ?? ":::").split(":")[0] !== dic.dicissionValue
-          ) {
-            result = result; // tetap true
-          } else {
-            result = false;
-          }
-          break;
-
-        default:
-          result = result;
-      }
-    }
-
-    return result;
+    let decision = page.decisions.find((d) => d.groupId === groupId);
+    if (!decision) return result; // Jika tidak ada decision, tampilkan group
   }
 
   // 🔧 Fungsi bantu untuk mengambil nilai dari data submission
