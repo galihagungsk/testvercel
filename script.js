@@ -156,7 +156,10 @@ function tampilkanDetail(
 
     let result = true;
     let decision = page.decisions.find((d) => d.groupId === groupId);
-    if (!decision) return result; // Jika tidak ada decision, tampilkan group
+    if (decision !== null && decision !== undefined) {
+      return false; // Jika decision tidak null, jangan tampilkan group
+    }
+    return result; // Jika tidak ada decision, tampilkan group
   }
 
   // 🔧 Fungsi bantu untuk mengambil nilai dari data submission
