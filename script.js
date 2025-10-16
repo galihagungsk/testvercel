@@ -162,7 +162,7 @@ function tampilkanDetail(
     return;
   }
 
-  // 🔹 Simpan data value sementara
+  // 🔹 Ambil data submission yang sudah tersimpan
   let currentData = formData.data ? [...formData.data] : [];
 
   // ======================================================
@@ -171,7 +171,7 @@ function tampilkanDetail(
   function getValue(question, data) {
     if (!question || !data) return null;
     const found = data.find((d) => d.question_id === question.question_id);
-    return found ? found.value : null;
+    return found ? found.value : "";
   }
 
   // ======================================================
@@ -232,7 +232,7 @@ function tampilkanDetail(
   }
 
   // ======================================================
-  // 🔹 Render form dinamis
+  // 🔹 Render form dinamis (preload value)
   // ======================================================
   formData.pages.forEach((page) => {
     const pageElement = document.createElement("div");
@@ -259,6 +259,8 @@ function tampilkanDetail(
         const label = `<label for="${q.code}">${
           q.label || q.name || "Tanpa Label"
         }${required}</label>`;
+
+        // 💾 Ambil nilai tersimpan dari data submission
         const currentValue = getValue(q, currentData) || q.value || "";
 
         let inputField = "";
@@ -290,7 +292,11 @@ function tampilkanDetail(
                 <input type="file" id="${q.code}" name="${
               q.code
             }" accept="image/*" capture="camera" />
-                <p style="font-size:12px;color:#666;">${q.hint || ""}</p>
+                ${
+                  currentValue
+                    ? `<p style="color:green;font-size:13px;">📷 Foto sudah diunggah: ${currentValue}</p>`
+                    : ""
+                }
               </div>
             `;
             break;
@@ -298,7 +304,9 @@ function tampilkanDetail(
           default:
             inputField = `
               <input type="text" id="${q.code}" name="${q.code}" 
-                placeholder="${q.hint || ""}" value="${currentValue}" />
+                placeholder="${q.hint || ""}" 
+                value="${currentValue}" 
+                data-question-id="${q.question_id}" />
             `;
         }
 
@@ -318,7 +326,7 @@ function tampilkanDetail(
   });
 
   // ======================================================
-  // 🔹 Evaluasi awal (fix bug tampilan awal)
+  // 🔹 Evaluasi visibilitas (awal + perubahan)
   // ======================================================
   function evaluateVisibilityAll() {
     formData.pages.forEach((page) => {
@@ -328,22 +336,17 @@ function tampilkanDetail(
         );
         if (!groupEl) return;
         const visible = isVisibleDicission(page, group.group_id, currentData);
-        if (visible) {
-          groupEl.style.display = "block";
-          groupEl.style.opacity = 1;
-        } else {
-          groupEl.style.opacity = 0;
-          setTimeout(() => (groupEl.style.display = "none"), 200);
-        }
+        groupEl.style.display = visible ? "block" : "none";
+        groupEl.style.opacity = visible ? 1 : 0;
       });
     });
   }
 
-  // Jalankan evaluasi pertama (awal buka form)
+  // 🔸 Evaluasi pertama kali (untuk preload state)
   evaluateVisibilityAll();
 
   // ======================================================
-  // 🔹 Saat dropdown berubah, re-evaluasi decision
+  // 🔹 Saat dropdown berubah → update data + evaluasi ulang
   // ======================================================
   formContainer.querySelectorAll("select").forEach((selectEl) => {
     selectEl.addEventListener("change", (e) => {
@@ -354,7 +357,7 @@ function tampilkanDetail(
       if (existing) existing.value = value;
       else currentData.push({ question_id: questionId, value });
 
-      evaluateVisibilityAll(); // recheck semua group
+      evaluateVisibilityAll();
     });
   });
 
@@ -365,11 +368,6 @@ function tampilkanDetail(
     tampilkanHasil(data, container);
   });
 }
-
-// 🔙 tombol kembali → tampilkan list lagi
-document.getElementById("btnBack").addEventListener("click", () => {
-  tampilkanHasil(dataAll, container);
-});
 
 // ===============================
 // 🌐 Event listener koneksi (opsional)
