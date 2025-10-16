@@ -152,12 +152,9 @@ function tampilkanDetail(
     <p><strong>Tanggal Submit:</strong> ${submission.submission_date || "-"}</p>
     <p><strong>Pesan:</strong> ${submission.submit_message || "-"}</p>
     <div id="formContainer" style="margin-top:10px;"></div>
-    <div id="progressContainer" style="margin-top:12px;"></div>
   `;
 
   const formContainer = container.querySelector("#formContainer");
-  const progressContainer = container.querySelector("#progressContainer");
-
   const formData = Array.isArray(dataForm) ? dataForm[0] : dataForm;
   if (!formData?.pages) {
     formContainer.innerHTML = `<p>⚠️ Tidak ada struktur form untuk submission ini.</p>`;
@@ -210,7 +207,7 @@ function tampilkanDetail(
     return result;
   }
 
-  // 🔹 Render form dinamis
+  // 🔹 Render form
   formData.pages.forEach((page) => {
     const pageEl = document.createElement("div");
     pageEl.classList.add("page-section");
@@ -257,22 +254,11 @@ function tampilkanDetail(
             <option value="">Harap Pilih</option>${optionsHtml}
           </select>`;
         } else if (q.type === "foto") {
-          // 📸 tombol kamera langsung
-          inputField = `
-            <input type="file" id="${
-              q.code
-            }" accept="image/*" capture="environment" data-question-id="${
-            q.question_id
-          }" style="display:none"/>
-            <button type="button" class="btn-camera" data-target="${
-              q.code
-            }">📷 Ambil Foto</button>
-            ${
-              saved
-                ? `<p class="file-info" style="font-size:12px;color:green">📷 Sudah diunggah</p>`
-                : `<p class="file-info" style="font-size:12px;color:#999">Belum ada foto</p>`
-            }
-          `;
+          inputField = `<input type="file" id="${q.code}" accept="image/*" />${
+            saved
+              ? `<p style="font-size:12px;color:green">📷 Sudah diunggah</p>`
+              : ""
+          }`;
         } else {
           inputField = `<input type="text" id="${q.code}" data-question-id="${
             q.question_id
@@ -287,46 +273,6 @@ function tampilkanDetail(
     });
 
     formContainer.appendChild(pageEl);
-  });
-
-  // ======================================================
-  // 📸 Otomatis buka kamera saat tombol diklik
-  // ======================================================
-  formContainer.querySelectorAll(".btn-camera").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-target");
-      const input = document.getElementById(targetId);
-      if (input) input.click();
-    });
-  });
-
-  // 📷 tampilkan nama file & preview thumbnail
-  formContainer.querySelectorAll('input[type="file"]').forEach((fileInput) => {
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      const infoEl = e.target.parentNode.querySelector(".file-info");
-
-      if (file) {
-        infoEl.textContent = `📷 ${file.name}`;
-        infoEl.style.color = "#007bff";
-      } else {
-        infoEl.textContent = "❌ Tidak ada file dipilih";
-        infoEl.style.color = "#999";
-      }
-
-      // tampilkan preview
-      let preview = infoEl.nextElementSibling;
-      if (preview && preview.tagName === "IMG") preview.remove();
-      if (file && file.type.startsWith("image/")) {
-        const img = document.createElement("img");
-        img.src = URL.createObjectURL(file);
-        img.style.maxWidth = "140px";
-        img.style.borderRadius = "8px";
-        img.style.marginTop = "6px";
-        img.style.display = "block";
-        infoEl.insertAdjacentElement("afterend", img);
-      }
-    });
   });
 
   // 🔹 Evaluasi visibilitas awal
@@ -344,15 +290,17 @@ function tampilkanDetail(
   }
   evaluateVisibilityAll();
 
-  // 🔹 Dropdown listener (nested otomatis)
+  // 🔹 Event listener otomatis parent-child berdasarkan "group"
   formContainer.querySelectorAll("select").forEach((sel) => {
     sel.addEventListener("change", (e) => {
       const questionId = parseInt(sel.dataset.questionId);
+      const collectionId = parseInt(sel.dataset.collectionId);
       const value = sel.value;
       const label = sel.options[sel.selectedIndex]?.text || "";
       const newValue = value ? `${value}:${label}` : "";
       const selectedGroup = sel.options[sel.selectedIndex]?.dataset.group || "";
 
+      // update currentData
       const existing = currentData.find((d) => d.question_id === questionId);
       if (existing) existing.value = newValue;
       else
@@ -362,28 +310,36 @@ function tampilkanDetail(
           value: newValue,
         });
 
-      // filter dropdown lain berdasarkan group
+      // cari semua dropdown lain yang punya opsi dengan group = selectedGroup
       formContainer.querySelectorAll("select").forEach((childSel) => {
+        console.log("Check Value");
         if (childSel === sel) return;
+
         const childCol = parseInt(childSel.dataset.collectionId);
         const allOpts = (dataOpsi || []).filter(
           (opt) => opt.collection_id === childCol
         );
 
+        // filter child berdasarkan group yang cocok
+        let filtered = allOpts;
+        if (selectedGroup) {
+          filtered = allOpts.filter(
+            (opt) =>
+              !opt.group ||
+              opt.group === selectedGroup ||
+              opt.group === value ||
+              opt.group === label
+          );
+        }
+
+        // hanya update child kalau ada group match
         const hasGroupMatch = allOpts.some(
           (opt) =>
             opt.group && (opt.group === selectedGroup || opt.group === value)
         );
         if (!hasGroupMatch) return;
 
-        const filtered = allOpts.filter(
-          (opt) =>
-            !opt.group ||
-            opt.group === selectedGroup ||
-            opt.group === value ||
-            opt.group === label
-        );
-
+        // rebuild opsi
         const oldValue = childSel.value;
         childSel.innerHTML = `<option value="">Harap Pilih</option>${filtered
           .map(
@@ -393,84 +349,20 @@ function tampilkanDetail(
               }>${opt.label}</option>`
           )
           .join("")}`;
+
+        if (value) {
+          // reset child jika parent punya nilai baru
+          childSel.value = "";
+          const existingChild = currentData.find(
+            (d) => d.question_id === parseInt(childSel.dataset.questionId)
+          );
+          if (existingChild) existingChild.value = "";
+        }
       });
 
+      // re-evaluasi decision
       evaluateVisibilityAll();
     });
-  });
-
-  // ======================================================
-  // 🔹 Tombol Simpan + Kirim ke Flutter
-  // ======================================================
-  const btnSave = document.createElement("button");
-  btnSave.textContent = "💾 Simpan & Kirim ke Flutter";
-  btnSave.style.cssText = `
-    background:#2196f3;color:#fff;border:none;
-    padding:10px 18px;border-radius:6px;
-    cursor:pointer;margin-top:14px;display:block;
-  `;
-  formContainer.after(btnSave);
-
-  btnSave.addEventListener("click", async () => {
-    const allInputs = formContainer.querySelectorAll("input, select, textarea");
-    const filePromises = [];
-
-    let totalFiles = 0;
-    let processedFiles = 0;
-
-    allInputs.forEach((el) => {
-      const qid = parseInt(el.dataset.questionId);
-      if (!qid) return;
-
-      if (el.type === "file" && el.files.length > 0) {
-        totalFiles += el.files.length;
-        const file = el.files[0];
-        const filePromise = new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64Data = reader.result.split(",")[1];
-            processedFiles++;
-            resolve({
-              submission_id: submission.submission_id,
-              question_id: qid,
-              value: base64Data,
-              file_name: file.name,
-              file_type: file.type,
-            });
-          };
-          reader.readAsDataURL(file);
-        });
-        filePromises.push(filePromise);
-      } else {
-        const val = el.value || "";
-        const existing = currentData.find((d) => d.question_id === qid);
-        if (existing) existing.value = val;
-        else
-          currentData.push({
-            submission_id: submission.submission_id,
-            question_id: qid,
-            value: val,
-          });
-      }
-    });
-
-    const fileResults = await Promise.all(filePromises);
-
-    const payload = {
-      submission_id: submission.submission_id,
-      data: [...currentData.filter((d) => !!d.value), ...fileResults],
-    };
-
-    if (window.flutter_inappwebview) {
-      await window.flutter_inappwebview.callHandler(
-        "onFormSubmit",
-        JSON.stringify(payload)
-      );
-      alert("✅ Data berhasil dikirim ke Flutter!");
-    } else {
-      console.log("📦 Mode web:", payload);
-      alert("⚠️ Flutter handler tidak tersedia (mode web).");
-    }
   });
 
   // 🔙 Tombol kembali
