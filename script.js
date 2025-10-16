@@ -257,7 +257,7 @@ function tampilkanDetail(
             <option value="">Harap Pilih</option>${optionsHtml}
           </select>`;
         } else if (q.type === "foto") {
-          // 📸 tombol kamera langsung
+          // 📸 Tombol kamera langsung + info bawaan
           inputField = `
             <input type="file" id="${
               q.code
@@ -267,11 +267,11 @@ function tampilkanDetail(
             <button type="button" class="btn-camera" data-target="${
               q.code
             }">📷 Ambil Foto</button>
-            ${
-              saved
-                ? `<p class="file-info" style="font-size:12px;color:green">📷 Sudah diunggah</p>`
-                : `<p class="file-info" style="font-size:12px;color:#999">Belum ada foto</p>`
-            }
+            <p class="file-info" style="font-size:12px;color:${
+              saved ? "green" : "#999"
+            };margin-top:4px;">
+              ${saved ? "📷 Sudah diunggah" : "Belum ada foto"}
+            </p>
           `;
         } else {
           inputField = `<input type="text" id="${q.code}" data-question-id="${
@@ -300,11 +300,12 @@ function tampilkanDetail(
     });
   });
 
-  // 📷 tampilkan nama file & preview thumbnail
+  // 📷 tampilkan nama file & preview thumbnail (✅ versi fix)
   formContainer.querySelectorAll('input[type="file"]').forEach((fileInput) => {
     fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
-      const infoEl = e.target.parentNode.querySelector(".file-info");
+      const wrapper = e.target.closest(".form-group");
+      const infoEl = wrapper.querySelector(".file-info");
 
       if (file) {
         infoEl.textContent = `📷 ${file.name}`;
@@ -315,10 +316,12 @@ function tampilkanDetail(
       }
 
       // tampilkan preview
-      let preview = infoEl.nextElementSibling;
-      if (preview && preview.tagName === "IMG") preview.remove();
+      let preview = wrapper.querySelector("img.preview-thumb");
+      if (preview) preview.remove();
+
       if (file && file.type.startsWith("image/")) {
         const img = document.createElement("img");
+        img.className = "preview-thumb";
         img.src = URL.createObjectURL(file);
         img.style.maxWidth = "140px";
         img.style.borderRadius = "8px";
@@ -415,21 +418,16 @@ function tampilkanDetail(
     const allInputs = formContainer.querySelectorAll("input, select, textarea");
     const filePromises = [];
 
-    let totalFiles = 0;
-    let processedFiles = 0;
-
     allInputs.forEach((el) => {
       const qid = parseInt(el.dataset.questionId);
       if (!qid) return;
 
       if (el.type === "file" && el.files.length > 0) {
-        totalFiles += el.files.length;
         const file = el.files[0];
         const filePromise = new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = () => {
             const base64Data = reader.result.split(",")[1];
-            processedFiles++;
             resolve({
               submission_id: submission.submission_id,
               question_id: qid,
@@ -455,7 +453,6 @@ function tampilkanDetail(
     });
 
     const fileResults = await Promise.all(filePromises);
-
     const payload = {
       submission_id: submission.submission_id,
       data: [...currentData.filter((d) => !!d.value), ...fileResults],
