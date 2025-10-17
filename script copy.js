@@ -10,7 +10,14 @@ window.addEventListener("load", () => {
     return;
   }
 
+  // if (window.flutter_inappwebview) {
+  //   window.flutter_inappwebview.callHandler("onWebReady");
+  //   console.log("✅ Mengirim sinyal onWebReady ke Flutter");
+  // } else {
+  //   console.warn("⚠️ flutter_inappwebview belum terdeteksi");
+  // }
   if (window.FlutterChannel) {
+    // Kirim sinyal ke Flutter (web sudah siap)
     window.FlutterChannel.postMessage(JSON.stringify({ status: "ready" }));
     console.log("✅ Mengirim sinyal onWebReady ke FlutterChannel");
   } else {
@@ -32,10 +39,12 @@ function receiveDataFromFlutter(data) {
     if (!container) return;
 
     if (typeof data === "string") data = JSON.parse(data);
+
     tampilkanHasil(data, container);
 
     window.flutterReceivedData = data;
 
+    // Kirim konfirmasi ke Flutter
     if (window.FlutterChannel) {
       window.FlutterChannel.postMessage(
         JSON.stringify({
@@ -48,9 +57,32 @@ function receiveDataFromFlutter(data) {
     console.error("❌ Gagal parsing data dari Flutter:", error, data);
   }
 }
+// function receiveDataFromFlutter(data) {
+//   try {
+//     console.log("📩 Menerima data dari Flutter:", data);
+
+//     const container = document.getElementById("flutter-data-container");
+//     if (!container) return;
+
+//     if (typeof data === "string") data = JSON.parse(data);
+
+//     tampilkanHasil(data, container);
+
+//     window.flutterReceivedData = data;
+
+//     if (window.flutter_inappwebview) {
+//       window.flutter_inappwebview.callHandler("onDataReceived", {
+//         status: "ok",
+//         count: Array.isArray(data) ? data.length : Object.keys(data).length,
+//       });
+//     }
+//   } catch (error) {
+//     console.error("❌ Gagal parsing data dari Flutter:", error, data);
+//   }
+// }
 
 // ===============================
-// 🧱 Tampilkan daftar submission
+// 🧱 Fungsi untuk menampilkan hasil ke halaman
 // ===============================
 function tampilkanHasil(data, container) {
   if (!data || !data.process) {
@@ -76,6 +108,7 @@ function tampilkanHasil(data, container) {
         <div class="section">
           <span class="label">NAMA LENGKAP PEMOHON</span><br>
           <span class="value">${submission.data?.[0]?.value || "-"}</span>
+          <span class="status">0/0</span>
         </div>
 
         <div class="section">
@@ -95,6 +128,7 @@ function tampilkanHasil(data, container) {
 
   container.innerHTML = html2;
 
+  // 🔹 Klik card → tampilkan detail di container yang sama
   const cards = container.querySelectorAll(".card");
   cards.forEach((card) => {
     card.addEventListener("click", () => {
@@ -103,7 +137,9 @@ function tampilkanHasil(data, container) {
       const selectedForm = Array.isArray(data.form)
         ? data.form.find(
             (f) =>
+              // cari di f.data
               f.data?.some((d) => d.submission_id == id) ||
+              // cari di f.pages[*].questionGroups[*].questions[*]
               f.pages?.some((p) =>
                 p.questionGroups?.some((g) =>
                   g.questions?.some((q) => q.submission_id == id)
@@ -134,7 +170,7 @@ function tampilkanHasil(data, container) {
 }
 
 // ===============================
-// 🧱 Tampilkan halaman detail submission
+// 🧱 Tampilkan halaman detail
 // ===============================
 function tampilkanDetail(
   submission,
@@ -149,9 +185,12 @@ function tampilkanDetail(
     <p><strong>Tanggal Submit:</strong> ${submission.submission_date || "-"}</p>
     <p><strong>Pesan:</strong> ${submission.submit_message || "-"}</p>
     <div id="formContainer" style="margin-top:10px;"></div>
+    <div id="progressContainer" style="margin-top:12px;"></div>
   `;
 
   const formContainer = container.querySelector("#formContainer");
+  const progressContainer = container.querySelector("#progressContainer");
+
   const formData = Array.isArray(dataForm) ? dataForm[0] : dataForm;
   if (!formData?.pages) {
     formContainer.innerHTML = `<p>⚠️ Tidak ada struktur form untuk submission ini.</p>`;
@@ -160,16 +199,19 @@ function tampilkanDetail(
 
   let currentData = formData.data ? [...formData.data] : [];
 
+  // Helper ambil nilai tersimpan
   function getValue(question, data) {
     if (!question || !Array.isArray(data)) return "";
     const found = data.find((d) => d.question_id === question.question_id);
     return found ? found.value || "" : "";
   }
 
+  // Decision visibility logic
   function isVisibleDicission(page, groupId, data) {
     if (!page || !groupId) return true;
     const dicissions = page.dicissions || [];
     if (!Array.isArray(dicissions) || dicissions.length === 0) return true;
+
     let result = true;
     const related = dicissions.filter((d) => d.group_id === groupId);
     if (related.length === 0) return true;
@@ -187,11 +229,11 @@ function tampilkanDetail(
         : refValue;
 
       switch (dic.dicission_type) {
-        case 402:
+        case 402: // equal
           result =
             refKey === dic.dicission_value || refValue === dic.dicission_value;
           break;
-        case 403:
+        case 403: // notEqual
           result =
             refKey !== dic.dicission_value && refValue !== dic.dicission_value;
           break;
@@ -201,9 +243,7 @@ function tampilkanDetail(
     return result;
   }
 
-  // ===============================
-  // 🔹 Render dinamis setiap page & group
-  // ===============================
+  // Render form dinamis
   formData.pages.forEach((page) => {
     const pageEl = document.createElement("div");
     pageEl.classList.add("page-section");
@@ -227,9 +267,6 @@ function tampilkanDetail(
         const saved = getValue(q, currentData);
         let inputField = "";
 
-        // ===============================
-        // 🧩 FIELD: DROPDOWN
-        // ===============================
         if (q.type === "dropdown") {
           const opts = (dataOpsi || []).filter(
             (opt) => opt.collection_id === q.collection_id
@@ -252,53 +289,24 @@ function tampilkanDetail(
             data-group-id="${group.group_id}">
             <option value="">Harap Pilih</option>${optionsHtml}
           </select>`;
-        }
-
-        // ===============================
-        // 🧩 FIELD: FOTO (Compact Format)
-        // ===============================
-        else if (q.type === "foto") {
-          const parts = (saved || "").split("|");
-          const savedFileName = parts[0] || "";
-          const savedFileType = parts[1] || "";
-          const savedBase64 = parts[2] || "";
-          const hasImage = savedBase64.length > 0;
-
+        } else if (q.type === "foto") {
+          // Tombol kamera langsung + info bawaan
           inputField = `
-            <div class="photo-upload-wrapper" style="margin-top:8px;">
-              <input type="file" id="${
-                q.code
-              }" accept="image/*" capture="environment" data-question-id="${
+            <input type="file" id="${
+              q.code
+            }" accept="image/*" capture="environment" data-question-id="${
             q.question_id
           }" style="display:none"/>
-              <button type="button" class="btn-camera" data-target="${
-                q.code
-              }" style="background:#2196f3;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;">
-                📷 Ambil Foto
-              </button>
-              <p class="file-info" style="font-size:12px;color:${
-                hasImage ? "green" : "#999"
-              };margin-top:4px;">
-                ${
-                  hasImage
-                    ? `📷 ${savedFileName || "Sudah diunggah"}`
-                    : "Belum ada foto"
-                }
-              </p>
-              ${
-                hasImage
-                  ? `<img class="preview-thumb" src="data:${savedFileType};base64,${savedBase64}"
-                     style="max-width:140px;border-radius:8px;margin-top:6px;display:block;" />`
-                  : ""
-              }
-            </div>
+            <button type="button" class="btn-camera" data-target="${
+              q.code
+            }">📷 Ambil Foto</button>
+            <p class="file-info" style="font-size:12px;color:${
+              saved ? "green" : "#999"
+            };margin-top:4px;">
+              ${saved ? "📷 Sudah diunggah" : "Belum ada foto"}
+            </p>
           `;
-        }
-
-        // ===============================
-        // 🧩 FIELD: TEXT
-        // ===============================
-        else {
+        } else {
           inputField = `<input type="text" id="${q.code}" data-question-id="${
             q.question_id
           }" value="${saved || ""}" placeholder="${q.hint || ""}" />`;
@@ -314,83 +322,78 @@ function tampilkanDetail(
     formContainer.appendChild(pageEl);
   });
 
-  // ===============================
-  // 📸 Handler kamera & file upload (format compact)
-  // ===============================
+  // Tombol kamera → buka kamera langsung
   formContainer.querySelectorAll(".btn-camera").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-target");
       const input = document.getElementById(targetId);
-      if (input) input.click();
+      if (input) {
+        try {
+          input.click(); // buka kamera
+        } catch (e) {
+          console.warn("Kamera gagal dibuka, fallback ke galeri");
+          input.removeAttribute("capture");
+          input.click();
+        }
+      }
     });
   });
 
+  // 📷 tampilkan nama file, preview, dan simpan ke currentData (✅ versi fix)
   formContainer.querySelectorAll('input[type="file"]').forEach((fileInput) => {
     fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
-      const wrapper = e.target.closest(".photo-upload-wrapper");
+      const wrapper = e.target.closest(".form-group");
       const infoEl = wrapper.querySelector(".file-info");
       const qid = parseInt(e.target.dataset.questionId);
-      if (!qid || !file) return;
+      if (!qid) return;
 
-      const oldPreview = wrapper.querySelector(".preview-thumb");
-      if (oldPreview) oldPreview.remove();
+      // Reset preview
+      let preview = wrapper.querySelector("img.preview-thumb");
+      if (preview) preview.remove();
 
-      infoEl.textContent = `📷 ${file.name}`;
-      infoEl.style.color = "#007bff";
+      if (file) {
+        infoEl.textContent = `📷 ${file.name}`;
+        infoEl.style.color = "#007bff";
 
-      const img = document.createElement("img");
-      img.className = "preview-thumb";
-      img.style.maxWidth = "140px";
-      img.style.borderRadius = "8px";
-      img.style.marginTop = "6px";
-      img.style.display = "block";
-      infoEl.insertAdjacentElement("afterend", img);
+        // buat preview
+        const img = document.createElement("img");
+        img.className = "preview-thumb";
+        img.src = URL.createObjectURL(file);
+        img.style.maxWidth = "140px";
+        img.style.borderRadius = "8px";
+        img.style.marginTop = "6px";
+        img.style.display = "block";
+        infoEl.insertAdjacentElement("afterend", img);
 
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64DataURL = reader.result;
-        img.src = base64DataURL;
-        const base64Data = base64DataURL.split(",")[1];
-
-        let lat = null,
-          lon = null;
-        try {
-          const pos = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 5000,
-              maximumAge: 0,
+        // baca isi file ke base64 lalu simpan ke currentData
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64Data = reader.result.split(",")[1];
+          const existing = currentData.find((d) => d.question_id === qid);
+          if (existing) {
+            existing.value = base64Data;
+            existing.file_name = file.name;
+            existing.file_type = file.type;
+          } else {
+            currentData.push({
+              submission_id: submission.submission_id,
+              question_id: qid,
+              value: base64Data,
+              file_name: file.name,
+              file_type: file.type,
             });
-          });
-          lat = pos.coords.latitude;
-          lon = pos.coords.longitude;
-        } catch (e) {
-          console.warn("⚠️ Gagal ambil lokasi:", e.message);
-        }
-
-        const compactValue = `${file.name}|${file.type}|${base64Data}`;
-        const existing = currentData.find((d) => d.question_id === qid);
-        const dataEntry = {
-          submission_id: submission.submission_id,
-          question_id: qid,
-          value: compactValue,
-          lat,
-          lon,
+          }
         };
-
-        if (existing) Object.assign(existing, dataEntry);
-        else currentData.push(dataEntry);
-
-        infoEl.textContent = "📷 Sudah diunggah";
-        infoEl.style.color = "green";
-        console.log("✅ Foto tersimpan:", dataEntry);
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      } else {
+        infoEl.textContent = "❌ Tidak ada file dipilih";
+        infoEl.style.color = "#999";
+      }
     });
   });
 
-  // Evaluasi decision visibility & nested dropdown
+  // Evaluasi visibilitas awal
   function evaluateVisibilityAll() {
     formData.pages.forEach((page) => {
       (page.questionGroups || []).forEach((group) => {
@@ -405,6 +408,7 @@ function tampilkanDetail(
   }
   evaluateVisibilityAll();
 
+  // Dropdown listener nested otomatis
   formContainer.querySelectorAll("select").forEach((sel) => {
     sel.addEventListener("change", (e) => {
       const questionId = parseInt(sel.dataset.questionId);
@@ -422,6 +426,7 @@ function tampilkanDetail(
           value: newValue,
         });
 
+      // filter dropdown lain berdasarkan group
       formContainer.querySelectorAll("select").forEach((childSel) => {
         if (childSel === sel) return;
         const childCol = parseInt(childSel.dataset.collectionId);
@@ -468,14 +473,28 @@ function tampilkanDetail(
   `;
   formContainer.after(btnSave);
 
-  btnSave.addEventListener("click", () => {
+  btnSave.addEventListener("click", async () => {
     const payload = {
       submission_id: submission.submission_id,
       data: currentData.filter((d) => !!d.value),
     };
+
+    // if (window.flutter_inappwebview) {
+    //   await window.flutter_inappwebview.callHandler(
+    //     "onFormSubmit",
+    //     JSON.stringify(payload)
+    //   );
+    //   alert("✅ Data berhasil dikirim ke Flutter!");
+    // } else {
+    //   console.log("📦 Mode web:", payload);
+    //   alert("⚠️ Flutter handler tidak tersedia (mode web).");
+    // }
     if (window.FlutterChannel) {
       window.FlutterChannel.postMessage(
-        JSON.stringify({ type: "onFormSubmit", payload })
+        JSON.stringify({
+          type: "onFormSubmit",
+          payload,
+        })
       );
       alert("✅ Data berhasil dikirim ke Flutter!");
     } else {
@@ -484,13 +503,19 @@ function tampilkanDetail(
     }
   });
 
+  // Tombol kembali
   container.querySelector("#btnBack").addEventListener("click", () => {
-    tampilkanHasil(window.flutterReceivedData, container);
+    tampilkanHasil(data, container);
   });
 }
 
 // ===============================
-// 🌐 Listener koneksi (opsional)
+// 🌐 Event listener koneksi (opsional)
 // ===============================
-window.addEventListener("offline", () => console.log("⚠️ Mode offline aktif"));
-window.addEventListener("online", () => console.log("✅ Kembali online"));
+window.addEventListener("offline", () => {
+  console.log("⚠️ Mode offline aktif");
+});
+
+window.addEventListener("online", () => {
+  console.log("✅ Kembali online");
+});
