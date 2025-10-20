@@ -353,64 +353,48 @@ function tampilkanDetail(
   });
 
   // ✅ Perbaikan besar untuk ambil foto & masuk ke cekData
-  // HARUS DITEMPATKAN SETELAH FORM DIPASANG KE DOM
-  setTimeout(() => {
-    const fileInputs = formContainer.querySelectorAll('input[type="file"]');
+  formContainer.querySelectorAll('input[type="file"]').forEach((fileInput) => {
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-    console.log("📁 Jumlah input file ditemukan:", fileInputs.length); // <--- debug pertama, ini harus muncul
+      const reader = new FileReader();
+      const qid = parseInt(e.target.getAttribute("data-question-id"));
+      const parent = e.target.closest(".photo-upload-wrapper");
+      const infoEl = parent.querySelector(".file-info");
+      const imgPreview =
+        parent.querySelector(".preview-thumb") || document.createElement("img");
 
-    fileInputs.forEach((fileInput) => {
-      fileInput.addEventListener("change", (e) => {
-        console.log("📸 EVENT TERDETEKSI: change file input"); // <--- debug kedua
+      reader.onload = () => {
+        const base64DataURL = reader.result;
+        const base64Data = base64DataURL.split(",")[1];
 
-        const file = e.target.files[0];
-        if (!file) {
-          console.warn("⚠️ Tidak ada file yang dipilih");
-          return;
-        }
-
-        const qid = parseInt(e.target.dataset.questionId);
-        const reader = new FileReader();
-
-        const parent = e.target.closest(".photo-upload-wrapper");
-        const infoEl = parent.querySelector(".file-info");
-        let imgPreview = parent.querySelector(".preview-thumb");
-
-        reader.onload = () => {
-          console.log("📸 File dibaca oleh FileReader"); // <--- debug ketiga
-
-          const base64DataURL = reader.result;
-          const base64Data = base64DataURL.split(",")[1];
-
-          if (!imgPreview) {
-            imgPreview = document.createElement("img");
-            imgPreview.className = "preview-thumb";
-            parent.appendChild(imgPreview);
-          }
-          imgPreview.src = base64DataURL;
-          imgPreview.style =
-            "max-width:140px;border-radius:8px;margin-top:6px;display:block;";
-
-          const dataEntry = {
-            submission_id: submission.submission_id,
-            question_id: qid,
-            value: base64Data,
-            lat: 2,
-            lon: 2,
-          };
-
-          cekData.push(dataEntry);
-          infoEl.textContent = "📷 Sudah diunggah";
-          infoEl.style.color = "green";
-
-          console.log("✅ Foto tersimpan:", dataEntry);
-          console.log("📦 cekData:", cekData);
+        const dataEntry = {
+          submission_id: submission.submission_id,
+          question_id: qid,
+          value: base64Data,
+          lat: 2,
+          lon: 2,
         };
 
-        reader.readAsDataURL(file);
-      });
+        cekData.push(dataEntry);
+
+        const existing = currentData.find((d) => d.question_id === qid);
+        if (existing) existing.value = base64Data;
+        else currentData.push(dataEntry);
+
+        // ✅ Update status text
+        infoEl.textContent = "📷 Sudah diunggah";
+        infoEl.style.color = "green";
+
+        // ✅ Debug log
+        console.log("✅ Foto tersimpan:", dataEntry);
+        console.log("📦 cekData:", cekData);
+      };
+
+      reader.readAsDataURL(file);
     });
-  }, 500); // ← Pastikan DOM sudah selesai dibuat
+  });
 
   // Evaluasi decision visibility & nested dropdown
   function evaluateVisibilityAll() {
