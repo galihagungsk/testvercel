@@ -331,70 +331,74 @@ function tampilkanDetail(
     });
   });
 
-  formContainer.querySelectorAll('input[type="text"').forEach((textInput) => {
+  // ✅ Perbaikan typo selector (ini sebelumnya menyebabkan JS berhenti total)
+  formContainer.querySelectorAll('input[type="text"]').forEach((textInput) => {
     textInput.addEventListener("input", (e) => {
       const qid = parseInt(e.target.dataset.questionId);
       const value = e.target.value;
-      const existing = currentData.find((d) => d.question_id === qid);
-      cekData.push({
+      const entry = {
         submission_id: submission.submission_id,
         question_id: qid,
         value: value,
         lat: 2,
         lon: 2,
-      });
+      };
+
+      cekData.push(entry);
+
+      const existing = currentData.find((d) => d.question_id === qid);
       if (existing) existing.value = value;
-      else
-        currentData.push({
-          submission_id: submission.submission_id,
-          question_id: qid,
-          value: value,
-          lat: 2,
-          lon: 2,
-        });
+      else currentData.push(entry);
     });
   });
 
+  // ✅ Perbaikan besar untuk ambil foto & masuk ke cekData
   formContainer.querySelectorAll('input[type="file"]').forEach((fileInput) => {
     fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      const qid = e.target.getAttribute("data-question-id"); // ✅ Fix: ambil ID pertanyaan
-      const reader = new FileReader(); // ✅ Fix: deklarasi reader cukup 1x
+      const reader = new FileReader();
+      const qid = parseInt(e.target.getAttribute("data-question-id"));
       const parent = e.target.closest(".photo-upload-wrapper");
-      const infoEl = parent.querySelector(".file-info"); // ✅ Fix: update status
+      const infoEl = parent.querySelector(".file-info");
       const imgPreview =
         parent.querySelector(".preview-thumb") || document.createElement("img");
 
       reader.onload = () => {
         const base64DataURL = reader.result;
-        const base64Data = base64DataURL.split(",")[1]; // ✅ Ambil bagian Base64 murni
+        const base64Data = base64DataURL.split(",")[1]; // ambil Base64 saja
 
-        // ✅ Update preview image
+        const dataEntry = {
+          submission_id: submission.submission_id,
+          question_id: qid,
+          value: base64Data, // ⬅ disimpan langsung base64 murni
+          lat: 2,
+          lon: 2,
+        };
+
+        // ✅ Masukkan ke cekData
+        cekData.push(dataEntry);
+
+        // ✅ Masukkan ke currentData agar konsisten
+        const existing = currentData.find((d) => d.question_id === qid);
+        if (existing) existing.value = base64Data;
+        else currentData.push(dataEntry);
+
+        // ✅ Tampilkan preview gambar
         imgPreview.src = base64DataURL;
         imgPreview.className = "preview-thumb";
         imgPreview.style =
           "max-width:140px;border-radius:8px;margin-top:6px;display:block;";
         parent.appendChild(imgPreview);
 
-        // ✅ Masukkan ke array cekData
-        const dataEntry = {
-          submission_id: submission.submission_id,
-          question_id: qid,
-          value: base64Data,
-          lat: 2,
-          lon: 2,
-        };
-
-        cekData.push(dataEntry);
-
-        // ✅ Update UI info
+        // ✅ Update status text
         infoEl.textContent = "📷 Sudah diunggah";
         infoEl.style.color = "green";
 
+        // ✅ Debug log
         console.log("✅ Foto tersimpan:", dataEntry);
-        console.log("🧪 cekData sekarang:", cekData);
+        console.log("📦 cekData:", cekData);
       };
 
       reader.readAsDataURL(file);
