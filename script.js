@@ -10,11 +10,17 @@ window.addEventListener("load", () => {
     return;
   }
 
-  if (window.FlutterChannel) {
-    window.FlutterChannel.postMessage(JSON.stringify({ status: "ready" }));
-    console.log("✅ Mengirim sinyal onWebReady ke FlutterChannel");
+  // ✅ Kirim "ready" ke Flutter menggunakan flutter_inappwebview
+  if (window.flutter_inappwebview) {
+    window.flutter_inappwebview.callHandler(
+      "FlutterChannel",
+      JSON.stringify({ status: "ready" })
+    );
+    console.log(
+      "✅ Mengirim sinyal onWebReady ke FlutterChannel (InAppWebView)"
+    );
   } else {
-    console.warn("⚠️ FlutterChannel belum tersedia");
+    console.warn("⚠️ flutter_inappwebview belum tersedia");
   }
 
   window.flutterReady = true;
@@ -22,7 +28,7 @@ window.addEventListener("load", () => {
 });
 
 // ===============================
-// 🔁 Terima data dari Flutter
+// 🔁 Terima data dari Flutter (Fungsi ini tetap sama, Flutter akan panggil manual)
 // ===============================
 function receiveDataFromFlutter(data) {
   try {
@@ -36,8 +42,10 @@ function receiveDataFromFlutter(data) {
 
     window.flutterReceivedData = data;
 
-    if (window.FlutterChannel) {
-      window.FlutterChannel.postMessage(
+    // ✅ Kirim respon balik ke Flutter via InAppWebView
+    if (window.flutter_inappwebview) {
+      window.flutter_inappwebview.callHandler(
+        "FlutterChannel",
         JSON.stringify({
           status: "ok",
           receivedKeys: Object.keys(data),
@@ -317,41 +325,27 @@ function tampilkanDetail(
   // ===============================
   // 📸 Handler kamera & file upload (format compact)
   // ===============================
-  formContainer.querySelectorAll(".btn-camera").forEach((btn) => {
+  document.querySelectorAll(".btn-camera").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-target");
-      const input = document.getElementById(targetId);
-      if (input) input.click();
+      document.getElementById(targetId).click();
     });
   });
 
   formContainer.querySelectorAll('input[type="file"]').forEach((fileInput) => {
     fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
-      const wrapper = e.target.closest(".photo-upload-wrapper");
-      const infoEl = wrapper.querySelector(".file-info");
-      const qid = parseInt(e.target.dataset.questionId);
-      if (!qid || !file) return;
+      if (!file) return;
 
-      const oldPreview = wrapper.querySelector(".preview-thumb");
-      if (oldPreview) oldPreview.remove();
+      const code = e.target.id;
+      const info = document.getElementById(`info-${code}`);
 
-      infoEl.textContent = `📷 ${file.name}`;
-      infoEl.style.color = "#007bff";
-
-      const img = document.createElement("img");
-      img.className = "preview-thumb";
-      img.style.maxWidth = "140px";
-      img.style.borderRadius = "8px";
-      img.style.marginTop = "6px";
-      img.style.display = "block";
-      infoEl.insertAdjacentElement("afterend", img);
-
-      const reader = new FileReader();
       reader.onload = async () => {
         const base64DataURL = reader.result;
         img.src = base64DataURL;
         const base64Data = base64DataURL.split(",")[1];
+        // Baca sebagai Base64
+        const reader = new FileReader();
 
         let lat = null,
           lon = null;
@@ -369,7 +363,8 @@ function tampilkanDetail(
           console.warn("⚠️ Gagal ambil lokasi:", e.message);
         }
 
-        const compactValue = `${file.name}|${file.type}|${base64Data}`;
+        const compactValue = `${base64Data}`;
+        console.log("Base64 Image:", base64Data);
         const existing = currentData.find((d) => d.question_id === qid);
         const dataEntry = {
           submission_id: submission.submission_id,
