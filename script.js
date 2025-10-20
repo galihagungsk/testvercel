@@ -167,6 +167,7 @@ function tampilkanDetail(
   }
 
   let currentData = formData.data ? [...formData.data] : [];
+  let cekData = [];
 
   function getValue(question, data) {
     if (!question || !Array.isArray(data)) return "";
@@ -331,6 +332,29 @@ function tampilkanDetail(
       document.getElementById(targetId).click();
     });
   });
+  formContainer.querySelectorAll('input[type="text"').forEach((textInput) => {
+    textInput.addEventListener("input", (e) => {
+      const qid = parseInt(e.target.dataset.questionId);
+      const value = e.target.value;
+      const existing = currentData.find((d) => d.question_id === qid);
+      cekData.push({
+        submission_id: submission.submission_id,
+        question_id: qid,
+        value: value,
+        lat: 2,
+        lon: 2,
+      });
+      if (existing) existing.value = value;
+      else
+        currentData.push({
+          submission_id: submission.submission_id,
+          question_id: qid,
+          value: value,
+          lat: 2,
+          lon: 2,
+        });
+    });
+  });
 
   formContainer.querySelectorAll('input[type="file"]').forEach((fileInput) => {
     fileInput.addEventListener("change", (e) => {
@@ -373,6 +397,7 @@ function tampilkanDetail(
           lat,
           lon,
         };
+        cekData.push(dataEntry);
 
         if (existing) Object.assign(existing, dataEntry);
         else currentData.push(dataEntry);
@@ -409,6 +434,13 @@ function tampilkanDetail(
       const selectedGroup = sel.options[sel.selectedIndex]?.dataset.group || "";
 
       const existing = currentData.find((d) => d.question_id === questionId);
+      cekData.push({
+        submission_id: submission.submission_id,
+        question_id: questionId,
+        value: newValue,
+        lat: 2,
+        lon: 2,
+      });
       if (existing) existing.value = newValue;
       else
         currentData.push({
@@ -468,7 +500,8 @@ function tampilkanDetail(
   btnSave.addEventListener("click", () => {
     const payload = {
       submission_id: submission.submission_id,
-      data: currentData,
+      // data: currentData,
+      data: cekData,
     };
     if (window.flutter_inappwebview) {
       window.flutter_inappwebview.callHandler(
