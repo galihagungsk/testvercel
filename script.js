@@ -470,14 +470,14 @@ function tampilkanDetail(
       submission_id: submission.submission_id,
       data: currentData,
     };
-    if (window.FlutterChannel) {
-      window.FlutterChannel.postMessage(
+    if (window.flutter_inappwebview) {
+      window.flutter_inappwebview.callHandler(
+        "FlutterChannel",
         JSON.stringify({ type: "onFormSubmit", payload })
       );
       alert("✅ Data berhasil dikirim ke Flutter!");
     } else {
-      console.log("📦 Mode web:", payload);
-      alert("⚠️ FlutterChannel tidak tersedia (mode web).");
+      console.log("⚠️ Tidak di dalam Flutter, data hasil form:", payload);
     }
   });
 
