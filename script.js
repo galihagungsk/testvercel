@@ -323,16 +323,14 @@ function tampilkanDetail(
     formContainer.appendChild(pageEl);
   });
 
-  // ===============================
   // 📸 Handler kamera & file upload (format compact)
-  // ===============================
   document.querySelectorAll(".btn-camera").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-target");
-      console.log("📸 Memicu input file:", targetId);
       document.getElementById(targetId).click();
     });
   });
+
   formContainer.querySelectorAll('input[type="text"').forEach((textInput) => {
     textInput.addEventListener("input", (e) => {
       const qid = parseInt(e.target.dataset.questionId);
@@ -362,35 +360,25 @@ function tampilkanDetail(
       const file = e.target.files[0];
       if (!file) return;
 
-      const code = e.target.id;
-      const info = document.getElementById(`info-${code}`);
+      const qid = e.target.getAttribute("data-question-id"); // ✅ Fix: ambil ID pertanyaan
+      const reader = new FileReader(); // ✅ Fix: deklarasi reader cukup 1x
+      const parent = e.target.closest(".photo-upload-wrapper");
+      const infoEl = parent.querySelector(".file-info"); // ✅ Fix: update status
+      const imgPreview =
+        parent.querySelector(".preview-thumb") || document.createElement("img");
 
-      reader.onload = async () => {
+      reader.onload = () => {
         const base64DataURL = reader.result;
-        img.src = base64DataURL;
-        const base64Data = base64DataURL.split(",")[1];
-        // Baca sebagai Base64
-        const reader = new FileReader();
+        const base64Data = base64DataURL.split(",")[1]; // ✅ Ambil bagian Base64 murni
 
-        // let lat = null,
-        //   lon = null;
-        // try {
-        //   const pos = await new Promise((resolve, reject) => {
-        //     navigator.geolocation.getCurrentPosition(resolve, reject, {
-        //       enableHighAccuracy: true,
-        //       timeout: 5000,
-        //       maximumAge: 0,
-        //     });
-        //   });
-        //   lat = pos.coords.latitude;
-        //   lon = pos.coords.longitude;
-        // } catch (e) {
-        //   console.warn("⚠️ Gagal ambil lokasi:", e.message);
-        // }
+        // ✅ Update preview image
+        imgPreview.src = base64DataURL;
+        imgPreview.className = "preview-thumb";
+        imgPreview.style =
+          "max-width:140px;border-radius:8px;margin-top:6px;display:block;";
+        parent.appendChild(imgPreview);
 
-        const compactValue = `${base64Data}`;
-        console.log("Base64 Image:", base64Data);
-        const existing = currentData.find((d) => d.question_id === qid);
+        // ✅ Masukkan ke array cekData
         const dataEntry = {
           submission_id: submission.submission_id,
           question_id: qid,
@@ -398,15 +386,17 @@ function tampilkanDetail(
           lat: 2,
           lon: 2,
         };
+
         cekData.push(dataEntry);
 
-        // if (existing) Object.assign(existing, dataEntry);
-        // else currentData.push(dataEntry);
-
+        // ✅ Update UI info
         infoEl.textContent = "📷 Sudah diunggah";
         infoEl.style.color = "green";
+
         console.log("✅ Foto tersimpan:", dataEntry);
+        console.log("🧪 cekData sekarang:", cekData);
       };
+
       reader.readAsDataURL(file);
     });
   });
