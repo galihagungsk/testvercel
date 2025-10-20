@@ -355,44 +355,49 @@ function tampilkanDetail(
   // ✅ Perbaikan besar untuk ambil foto & masuk ke cekData
   formContainer.querySelectorAll('input[type="file"]').forEach((fileInput) => {
     fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      try {
+        const file = e.target.files[0];
+        if (!file) return;
 
-      const reader = new FileReader();
-      const qid = parseInt(e.target.getAttribute("data-question-id"));
-      const parent = e.target.closest(".photo-upload-wrapper");
-      const infoEl = parent.querySelector(".file-info");
-      const imgPreview =
-        parent.querySelector(".preview-thumb") || document.createElement("img");
+        const reader = new FileReader();
+        const qid = parseInt(e.target.getAttribute("data-question-id"));
+        const parent = e.target.closest(".photo-upload-wrapper");
+        const infoEl = parent.querySelector(".file-info");
+        const imgPreview =
+          parent.querySelector(".preview-thumb") ||
+          document.createElement("img");
 
-      reader.onload = () => {
-        const base64DataURL = reader.result;
-        const base64Data = base64DataURL.split(",")[1];
+        reader.onload = () => {
+          const base64DataURL = reader.result;
+          const base64Data = base64DataURL.split(",")[1];
 
-        const dataEntry = {
-          submission_id: submission.submission_id,
-          question_id: qid,
-          value: base64Data,
-          lat: 2,
-          lon: 2,
+          const dataEntry = {
+            submission_id: submission.submission_id,
+            question_id: qid,
+            value: base64Data,
+            lat: 2,
+            lon: 2,
+          };
+
+          cekData.push(dataEntry);
+
+          const existing = currentData.find((d) => d.question_id === qid);
+          if (existing) existing.value = base64Data;
+          else currentData.push(dataEntry);
+
+          // ✅ Update status text
+          infoEl.textContent = "📷 Sudah diunggah";
+          infoEl.style.color = "green";
+
+          // ✅ Debug log
+          console.log("✅ Foto tersimpan:", dataEntry);
+          console.log("📦 cekData:", cekData);
         };
 
-        cekData.push(dataEntry);
-
-        const existing = currentData.find((d) => d.question_id === qid);
-        if (existing) existing.value = base64Data;
-        else currentData.push(dataEntry);
-
-        // ✅ Update status text
-        infoEl.textContent = "📷 Sudah diunggah";
-        infoEl.style.color = "green";
-
-        // ✅ Debug log
-        console.log("✅ Foto tersimpan:", dataEntry);
-        console.log("📦 cekData:", cekData);
-      };
-
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("❌ Gagal memproses file foto:", error);
+      }
     });
   });
 
