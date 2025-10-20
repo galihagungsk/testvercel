@@ -371,21 +371,21 @@ function tampilkanDetail(
         // Baca sebagai Base64
         const reader = new FileReader();
 
-        let lat = null,
-          lon = null;
-        try {
-          const pos = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 5000,
-              maximumAge: 0,
-            });
-          });
-          lat = pos.coords.latitude;
-          lon = pos.coords.longitude;
-        } catch (e) {
-          console.warn("⚠️ Gagal ambil lokasi:", e.message);
-        }
+        // let lat = null,
+        //   lon = null;
+        // try {
+        //   const pos = await new Promise((resolve, reject) => {
+        //     navigator.geolocation.getCurrentPosition(resolve, reject, {
+        //       enableHighAccuracy: true,
+        //       timeout: 5000,
+        //       maximumAge: 0,
+        //     });
+        //   });
+        //   lat = pos.coords.latitude;
+        //   lon = pos.coords.longitude;
+        // } catch (e) {
+        //   console.warn("⚠️ Gagal ambil lokasi:", e.message);
+        // }
 
         const compactValue = `${base64Data}`;
         console.log("Base64 Image:", base64Data);
@@ -394,13 +394,13 @@ function tampilkanDetail(
           submission_id: submission.submission_id,
           question_id: qid,
           value: base64Data,
-          lat,
-          lon,
+          lat: 2,
+          lon: 2,
         };
         cekData.push(dataEntry);
 
-        if (existing) Object.assign(existing, dataEntry);
-        else currentData.push(dataEntry);
+        // if (existing) Object.assign(existing, dataEntry);
+        // else currentData.push(dataEntry);
 
         infoEl.textContent = "📷 Sudah diunggah";
         infoEl.style.color = "green";
