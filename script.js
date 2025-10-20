@@ -369,7 +369,7 @@ function tampilkanDetail(
         const dataEntry = {
           submission_id: submission.submission_id,
           question_id: qid,
-          value: compactValue,
+          value: base64Data,
           lat,
           lon,
         };
@@ -415,6 +415,8 @@ function tampilkanDetail(
           submission_id: submission.submission_id,
           question_id: questionId,
           value: newValue,
+          lat: 2,
+          lon: 2,
         });
 
       formContainer.querySelectorAll("select").forEach((childSel) => {
@@ -466,7 +468,7 @@ function tampilkanDetail(
   btnSave.addEventListener("click", () => {
     const payload = {
       submission_id: submission.submission_id,
-      data: currentData.filter((d) => !!d.value),
+      data: currentData,
     };
     if (window.FlutterChannel) {
       window.FlutterChannel.postMessage(
