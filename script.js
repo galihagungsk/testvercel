@@ -491,3 +491,4 @@ function tampilkanDetail(
 // ===============================
 window.addEventListener("offline", () => console.log("⚠️ Mode offline aktif"));
 window.addEventListener("online", () => console.log("✅ Kembali online"));
+//asdsad
