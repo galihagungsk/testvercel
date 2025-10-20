@@ -329,6 +329,7 @@ function tampilkanDetail(
   document.querySelectorAll(".btn-camera").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-target");
+      console.log("📸 Memicu input file:", targetId);
       document.getElementById(targetId).click();
     });
   });
