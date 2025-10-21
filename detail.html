@@ -17,22 +17,7 @@
         style="padding: 10px; background: #f7f7f7; font-family: monospace"
       ></div>
     </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-
-    <script src="script.js"></script>
-
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register("service-worker.js")
-          .then((reg) => console.log("✅ Service Worker terdaftar:", reg.scope))
-          .catch((err) => console.error("❌ Gagal daftar SW:", err));
-      }
-
-      window.addEventListener("offline", () => {
-        console.log("⚠️ Mode offline aktif");
-      });
-    </script>
+    <script src="detailscript.js"></script>
   </body>
 </html>
