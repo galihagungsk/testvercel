@@ -194,7 +194,7 @@ function tampilkanDetail(
   }
 
   let currentData = formData.data ? [...formData.data] : [];
-  let cekData = [];
+  // let cekData = [];
 
   function getValue(question, data) {
     if (!question || !Array.isArray(data)) return "";
@@ -373,7 +373,7 @@ function tampilkanDetail(
         lon: loc ? loc.lon : null,
       };
 
-      cekData.push(entry);
+      // cekData.push(entry);
 
       const existing = currentData.find((d) => d.question_id === qid);
       if (existing) existing.value = value;
@@ -475,13 +475,13 @@ function tampilkanDetail(
 
       const existing = currentData.find((d) => d.question_id === questionId);
       const loc = await getUserLocation();
-      cekData.push({
-        submission_id: submission.submission_id,
-        question_id: questionId,
-        value: newValue,
-        lat: loc ? loc.lat : null,
-        lon: loc ? loc.lon : null,
-      });
+      // cekData.push({
+      //   submission_id: submission.submission_id,
+      //   question_id: questionId,
+      //   value: newValue,
+      //   lat: loc ? loc.lat : null,
+      //   lon: loc ? loc.lon : null,
+      // });
       if (existing) existing.value = newValue;
       else
         currentData.push({
@@ -542,8 +542,8 @@ function tampilkanDetail(
     dataForm.data = currentData;
     const payload = {
       submission_id: submission.submission_id,
-      // data: dataForm,
-      data: cekData,
+      data: dataForm,
+      // data: cekData,
     };
     if (window.flutter_inappwebview) {
       window.flutter_inappwebview.callHandler(
