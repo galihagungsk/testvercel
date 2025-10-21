@@ -28,6 +28,33 @@ window.addEventListener("load", () => {
 });
 
 // ===============================
+// 📍 Fungsi Ambil Lokasi (Latitude & Longitude)
+// ===============================
+function getUserLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      console.warn("❌ Geolocation tidak didukung browser");
+      return resolve(null);
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve({
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        });
+      },
+      (err) => {
+        console.warn("⚠️ Gagal ambil lokasi:", err.message);
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
+    );
+  });
+}
+
+// ===============================
 // 🔁 Terima data dari Flutter (Fungsi ini tetap sama, Flutter akan panggil manual)
 // ===============================
 function receiveDataFromFlutter(data) {
@@ -334,15 +361,16 @@ function tampilkanDetail(
   // ✅ Perbaikan typo selector (ini sebelumnya menyebabkan JS berhenti total)
   formContainer.querySelectorAll('input[type="text"]').forEach((textInput) => {
     3;
-    textInput.addEventListener("input", (e) => {
+    textInput.addEventListener("input", async (e) => {
       const qid = parseInt(e.target.dataset.questionId);
       const value = e.target.value;
+      const loc = await getUserLocation();
       const entry = {
         submission_id: submission.submission_id,
         question_id: qid,
         value: value,
-        lat: 2,
-        lon: 2,
+        lat: loc ? loc.lat : null,
+        lon: loc ? loc.lon : null,
       };
 
       // cekData.push(entry);
@@ -375,7 +403,7 @@ function tampilkanDetail(
           const img = new Image();
           img.src = reader.result;
 
-          img.onload = () => {
+          img.onload = async () => {
             // Gunakan ukuran asli gambar
             const canvas = document.createElement("canvas");
             canvas.width = img.width;
@@ -387,6 +415,7 @@ function tampilkanDetail(
             // 🔥 Kompres hanya kualitas, tanpa resize
             const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7); // 70% kualitas
             const compressedBase64 = compressedDataUrl.split(",")[1];
+            const loc = await getUserLocation();
 
             // Simpan ke currentData
             const existing = currentData.find((d) => d.question_id === qid);
@@ -397,8 +426,8 @@ function tampilkanDetail(
                 submission_id: submission.submission_id,
                 question_id: qid,
                 value: compressedBase64,
-                lat: 2,
-                lon: 2,
+                lat: loc ? loc.lat : null,
+                lon: loc ? loc.lon : null,
               });
             }
 
@@ -437,7 +466,7 @@ function tampilkanDetail(
   evaluateVisibilityAll();
 
   formContainer.querySelectorAll("select").forEach((sel) => {
-    sel.addEventListener("change", (e) => {
+    sel.addEventListener("change", async (e) => {
       const questionId = parseInt(sel.dataset.questionId);
       const value = sel.value;
       const label = sel.options[sel.selectedIndex]?.text || "";
@@ -445,6 +474,7 @@ function tampilkanDetail(
       const selectedGroup = sel.options[sel.selectedIndex]?.dataset.group || "";
 
       const existing = currentData.find((d) => d.question_id === questionId);
+      const loc = await getUserLocation();
       // cekData.push({
       //   submission_id: submission.submission_id,
       //   question_id: questionId,
@@ -458,8 +488,8 @@ function tampilkanDetail(
           submission_id: submission.submission_id,
           question_id: questionId,
           value: newValue,
-          lat: 2,
-          lon: 2,
+          lat: loc ? loc.lat : null,
+          lon: loc ? loc.lon : null,
         });
 
       formContainer.querySelectorAll("select").forEach((childSel) => {
