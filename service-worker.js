@@ -1,4 +1,4 @@
-const CACHE_NAME = "simulasi-kredit-v1";
+const CACHE_NAME = "simulasi-kredit-v2";
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
@@ -8,15 +8,10 @@ const FILES_TO_CACHE = [
 ];
 
 self.addEventListener("install", (e) => {
-  console.log("📦 Service Worker: Install");
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
-  );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
-  console.log("🔁 Service Worker: Activate");
   e.waitUntil(
     caches
       .keys()
@@ -29,21 +24,13 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   e.respondWith(
-    caches.match(e.request).then((res) => {
-      return (
-        res ||
-        fetch(e.request)
-          .then((fetchRes) => {
-            // Abaikan permintaan ekstensi
-            if (e.request.url.startsWith("chrome-extension://"))
-              return fetchRes;
-            return caches.open(CACHE_NAME).then((cache) => {
-              cache.put(e.request, fetchRes.clone());
-              return fetchRes;
-            });
-          })
-          .catch(() => caches.match("./index.html"))
-      );
-    })
+    fetch(e.request)
+      .then((response) => {
+        return caches.open(CACHE_NAME).then((cache) => {
+          cache.put(e.request, response.clone());
+          return response;
+        });
+      })
+      .catch(() => caches.match(e.request))
   );
 });
