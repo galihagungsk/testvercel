@@ -357,7 +357,10 @@ function tampilkanDetail(
     fileInput.addEventListener("change", (e) => {
       try {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) {
+          console.warn("⚠️ Tidak ada file yang dipilih.");
+          return;
+        }
 
         const reader = new FileReader();
         const qid = parseInt(e.target.getAttribute("data-question-id"));
