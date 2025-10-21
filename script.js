@@ -167,7 +167,7 @@ function tampilkanDetail(
   }
 
   let currentData = formData.data ? [...formData.data] : [];
-  let cekData = [];
+  // let cekData = [];
 
   function getValue(question, data) {
     if (!question || !Array.isArray(data)) return "";
@@ -344,7 +344,7 @@ function tampilkanDetail(
         lon: 2,
       };
 
-      cekData.push(entry);
+      // cekData.push(entry);
 
       const existing = currentData.find((d) => d.question_id === qid);
       if (existing) existing.value = value;
@@ -366,35 +366,51 @@ function tampilkanDetail(
         const qid = parseInt(e.target.getAttribute("data-question-id"));
         const parent = e.target.closest(".photo-upload-wrapper");
         const infoEl = parent.querySelector(".file-info");
-        const imgPreview =
-          parent.querySelector(".preview-thumb") ||
-          document.createElement("img");
+        // const imgPreview =
+        //   parent.querySelector(".preview-thumb") ||
+        //   document.createElement("img");
 
         reader.onload = () => {
-          const base64DataURL = reader.result;
-          const base64Data = base64DataURL.split(",")[1];
+          const img = new Image();
+          img.src = reader.result;
 
-          const dataEntry = {
-            submission_id: submission.submission_id,
-            question_id: qid,
-            value: base64Data,
-            lat: 2,
-            lon: 2,
+          img.onload = () => {
+            // Gunakan ukuran asli gambar
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+
+            // 🔥 Kompres hanya kualitas, tanpa resize
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7); // 70% kualitas
+            const compressedBase64 = compressedDataUrl.split(",")[1];
+
+            // Simpan ke currentData
+            const existing = currentData.find((d) => d.question_id === qid);
+            if (existing) {
+              existing.value = compressedBase64;
+            } else {
+              currentData.push({
+                submission_id: submission.submission_id,
+                question_id: qid,
+                value: compressedBase64,
+                lat: 2,
+                lon: 2,
+              });
+            }
+
+            // Log ukuran sebelum & sesudah kompres
+            console.log("✅ Foto dikompress tanpa resize:", {
+              originalSize: reader.result.length,
+              compressedSize: compressedBase64.length,
+            });
+
+            // Ubah status di UI
+            infoEl.textContent = "📷 Sudah diunggah";
+            infoEl.style.color = "green";
           };
-
-          cekData.push(dataEntry);
-
-          const existing = currentData.find((d) => d.question_id === qid);
-          if (existing) existing.value = base64Data;
-          else currentData.push(dataEntry);
-
-          // ✅ Update status text
-          infoEl.textContent = "📷 Sudah diunggah";
-          infoEl.style.color = "green";
-
-          // ✅ Debug log
-          console.log("✅ Foto tersimpan:", dataEntry);
-          console.log("📦 cekData:", cekData);
         };
 
         reader.readAsDataURL(file);
@@ -428,13 +444,13 @@ function tampilkanDetail(
       const selectedGroup = sel.options[sel.selectedIndex]?.dataset.group || "";
 
       const existing = currentData.find((d) => d.question_id === questionId);
-      cekData.push({
-        submission_id: submission.submission_id,
-        question_id: questionId,
-        value: newValue,
-        lat: 2,
-        lon: 2,
-      });
+      // cekData.push({
+      //   submission_id: submission.submission_id,
+      //   question_id: questionId,
+      //   value: newValue,
+      //   lat: 2,
+      //   lon: 2,
+      // });
       if (existing) existing.value = newValue;
       else
         currentData.push({
@@ -492,10 +508,11 @@ function tampilkanDetail(
   formContainer.after(btnSave);
 
   btnSave.addEventListener("click", () => {
+    dataForm.data = currentData;
     const payload = {
       submission_id: submission.submission_id,
-      // data: currentData,
-      data: cekData,
+      data: dataForm,
+      // data: cekData,
     };
     if (window.flutter_inappwebview) {
       window.flutter_inappwebview.callHandler(
