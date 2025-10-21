@@ -357,19 +357,37 @@ function tampilkanDetail(
     fileInput.addEventListener("change", (e) => {
       try {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) {
+          console.warn("⚠️ Tidak ada file yang dipilih");
+          return;
+        }
+
+        // ✅ Validasi jenis file & ukurannya
+        if (!file.type.startsWith("image/")) {
+          alert("❌ File bukan gambar!");
+          return;
+        }
+        if (file.size === 0) {
+          alert("❌ Foto gagal diambil (ukuran 0 byte)");
+          return;
+        }
 
         const reader = new FileReader();
         const qid = parseInt(e.target.getAttribute("data-question-id"));
         const parent = e.target.closest(".photo-upload-wrapper");
         const infoEl = parent.querySelector(".file-info");
-        const imgPreview =
-          parent.querySelector(".preview-thumb") ||
-          document.createElement("img");
 
         reader.onload = () => {
           const base64DataURL = reader.result;
           const base64Data = base64DataURL.split(",")[1];
+
+          // ✅ Cek validasi base64 setelah di-load
+          if (!base64Data || base64Data.length < 50) {
+            infoEl.textContent = "❌ Foto gagal tersimpan!";
+            infoEl.style.color = "red";
+            console.error("Gagal konversi base64:", base64DataURL);
+            return;
+          }
 
           const dataEntry = {
             submission_id: submission.submission_id,
@@ -385,13 +403,14 @@ function tampilkanDetail(
           if (existing) existing.value = base64Data;
           else currentData.push(dataEntry);
 
-          // ✅ Update status text
-          infoEl.textContent = "📷 Sudah diunggah";
+          infoEl.textContent = "✅ Foto berhasil diambil";
           infoEl.style.color = "green";
 
-          // ✅ Debug log
           console.log("✅ Foto tersimpan:", dataEntry);
-          console.log("📦 cekData:", cekData);
+        };
+
+        reader.onerror = () => {
+          alert("❌ Gagal membaca file foto");
         };
 
         reader.readAsDataURL(file);
@@ -401,19 +420,6 @@ function tampilkanDetail(
     });
   });
 
-  // Evaluasi decision visibility & nested dropdown
-  function evaluateVisibilityAll() {
-    formData.pages.forEach((page) => {
-      (page.questionGroups || []).forEach((group) => {
-        const groupEl = formContainer.querySelector(
-          `[data-group-id="${group.group_id}"]`
-        );
-        if (!groupEl) return;
-        const visible = isVisibleDicission(page, group.group_id, currentData);
-        groupEl.style.display = visible ? "block" : "none";
-      });
-    });
-  }
   evaluateVisibilityAll();
 
   formContainer.querySelectorAll("select").forEach((sel) => {
