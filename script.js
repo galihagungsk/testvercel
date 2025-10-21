@@ -333,6 +333,15 @@ function tampilkanDetail(
 
   // ✅ Perbaikan typo selector (ini sebelumnya menyebabkan JS berhenti total)
   formContainer.querySelectorAll('input[type="text"]').forEach((textInput) => {
+    let lattitude = 0;
+    let longitude = 0;
+    getUserLocation((pos) => {
+      if (pos) {
+        lattitude = pos.lat;
+        longitude = pos.lon;
+      }
+    });
+
     textInput.addEventListener("input", (e) => {
       const qid = parseInt(e.target.dataset.questionId);
       const value = e.target.value;
@@ -340,8 +349,8 @@ function tampilkanDetail(
         submission_id: submission.submission_id,
         question_id: qid,
         value: value,
-        lat: 2,
-        lon: 2,
+        lat: lattitude,
+        lon: longitude,
       };
 
       // cekData.push(entry);
@@ -366,6 +375,15 @@ function tampilkanDetail(
         const qid = parseInt(e.target.getAttribute("data-question-id"));
         const parent = e.target.closest(".photo-upload-wrapper");
         const infoEl = parent.querySelector(".file-info");
+
+        let lattitude = 0;
+        let longitude = 0;
+        getUserLocation((pos) => {
+          if (pos) {
+            lattitude = pos.lat;
+            longitude = pos.lon;
+          }
+        });
         // const imgPreview =
         //   parent.querySelector(".preview-thumb") ||
         //   document.createElement("img");
@@ -396,8 +414,8 @@ function tampilkanDetail(
                 submission_id: submission.submission_id,
                 question_id: qid,
                 value: compressedBase64,
-                lat: 2,
-                lon: 2,
+                lat: lattitude,
+                lon: longitude,
               });
             }
 
@@ -444,6 +462,14 @@ function tampilkanDetail(
       const selectedGroup = sel.options[sel.selectedIndex]?.dataset.group || "";
 
       const existing = currentData.find((d) => d.question_id === questionId);
+      let lattitude = 0;
+      let longitude = 0;
+      getUserLocation((pos) => {
+        if (pos) {
+          lattitude = pos.lat;
+          longitude = pos.lon;
+        }
+      });
       // cekData.push({
       //   submission_id: submission.submission_id,
       //   question_id: questionId,
@@ -451,14 +477,15 @@ function tampilkanDetail(
       //   lat: 2,
       //   lon: 2,
       // });
+
       if (existing) existing.value = newValue;
       else
         currentData.push({
           submission_id: submission.submission_id,
           question_id: questionId,
           value: newValue,
-          lat: 2,
-          lon: 2,
+          lat: lattitude,
+          lon: longitude,
         });
 
       formContainer.querySelectorAll("select").forEach((childSel) => {
