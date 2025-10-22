@@ -135,7 +135,9 @@ function tampilkanDetail() {
         const label = `<label for="${q.code}">${q.label}${
           q.mandatory === 1 ? "<span style='color:red'>*</span>" : ""
         }</label>`;
-        const saved = getValue(q, currentData);
+        const existingPhoto = currentData.find(
+          (d) => d.question_id === q.question_id
+        );
         let inputField = "";
 
         // ===============================
@@ -166,20 +168,20 @@ function tampilkanDetail() {
         }
 
         // ===============================
-        // 🧩 FIELD: FOTO (Base64 Saja, Tanpa Preview)
+        // 🧩 FIELD: FOTO (Base64, tanpa preview, status dinamis)
         // ===============================
         else if (q.type === "foto") {
-          // ✅ FIXED: Status tampil langsung dari currentData bukan dari saved lama
-          const existingPhoto = currentData.find(
+          // ✅ Ambil langsung dari currentData supaya status sesuai data terbaru
+          const existing = currentData.find(
             (d) => d.question_id === q.question_id
           );
           const hasImage =
-            existingPhoto &&
-            existingPhoto.value &&
-            existingPhoto.value.length > 0;
+            existing && existing.value && existing.value.length > 0;
 
           inputField = `
-            <div class="photo-upload-wrapper" style="margin-top:8px;">
+            <div class="photo-upload-wrapper" data-qid="${
+              q.question_id
+            }" style="margin-top:8px;">
               <input type="file" id="${
                 q.code
               }" accept="image/*" capture="environment"
@@ -268,34 +270,33 @@ function tampilkanDetail() {
     fileInput.addEventListener("change", (e) => {
       try {
         const file = e.target.files[0];
-        if (!file) return console.warn("⚠️ Tidak ada file yang dipilih.");
+        if (!file) return;
 
         const reader = new FileReader();
-        const qid = parseInt(e.target.getAttribute("data-question-id"));
-        const parent = e.target.closest(".photo-upload-wrapper");
-        const infoEl = parent.querySelector(".file-info");
+        const qid = parseInt(e.target.dataset.questionId);
+        const wrapper = e.target.closest(".photo-upload-wrapper");
+        const infoEl = wrapper.querySelector(".file-info");
 
         reader.onload = () => {
           const img = new Image();
           img.src = reader.result;
 
           img.onload = async () => {
+            // Gambar asli → canvas → compress JPEG
             const canvas = document.createElement("canvas");
             canvas.width = img.width;
             canvas.height = img.height;
             canvas.getContext("2d").drawImage(img, 0, 0);
 
-            // Kompres ke JPEG base64
             const compressedBase64 = canvas
               .toDataURL("image/jpeg", 0.7)
               .split(",")[1];
             const loc = await getUserLocation();
 
-            // ✅ Simpan/update ke currentData
-            const existing = currentData.find((d) => d.question_id === qid);
-            if (existing) {
-              existing.value = compressedBase64;
-            } else {
+            // ✅ Update ke currentData
+            const exist = currentData.find((d) => d.question_id === qid);
+            if (exist) exist.value = compressedBase64;
+            else
               currentData.push({
                 submission_id: submission.submission_id,
                 question_id: qid,
@@ -303,11 +304,10 @@ function tampilkanDetail() {
                 lat: loc?.lat ?? null,
                 lon: loc?.lon ?? null,
               });
-            }
 
             console.log("✅ Foto disimpan ke currentData:", currentData);
 
-            // ✅ Update status UI langsung TANPA reload
+            // ✅ Update UI langsung
             infoEl.textContent = "📷 Foto sudah tersimpan";
             infoEl.style.color = "green";
           };
