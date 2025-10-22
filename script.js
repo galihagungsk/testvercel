@@ -67,10 +67,10 @@ function receiveDataFromFlutter(data) {
 
     if (typeof data === "string") data = JSON.parse(data);
     // Debug isi semua field
-    console.log("➤ pertanyaan:", data.pertanyaan);
-    console.log("➤ opsi_jawaban:", data.opsi_jawaban);
-    console.log("➤ process:", data.process);
-    console.log("➤ form:", data.form);
+    // console.log("➤ pertanyaan:", data.pertanyaan);
+    // console.log("➤ opsi_jawaban:", data.opsi_jawaban);
+    // console.log("➤ process:", data.process);
+    // console.log("➤ form:", data.form);
 
     // ✅ Tampilkan hasil ke halaman (pakai data asli, bukan yang sudah compressed)
     if (data && (data.process || data.form)) {

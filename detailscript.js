@@ -310,6 +310,9 @@ function tampilkanDetail() {
                 lat: loc ? loc.lat : null,
                 lon: loc ? loc.lon : null,
               });
+              // Ubah status di UI
+              infoEl.textContent = "📷 Sudah diunggah";
+              infoEl.style.color = "green";
             }
 
             // Log ukuran sebelum & sesudah kompres
@@ -317,10 +320,6 @@ function tampilkanDetail() {
               originalSize: reader.result.length,
               compressedSize: compressedBase64.length,
             });
-
-            // Ubah status di UI
-            infoEl.textContent = "📷 Sudah diunggah";
-            infoEl.style.color = "green";
           };
         };
 
