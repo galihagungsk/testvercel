@@ -448,7 +448,7 @@ function tampilkanDetail() {
     };
     if (window.flutter_inappwebview) {
       window.flutter_inappwebview.callHandler(
-        "DataToFlutter",
+        "FlutterChannel",
         JSON.stringify({ type: "onFormSubmit", payload })
       );
       alert("✅ Data berhasil dikirim ke Flutter!");
