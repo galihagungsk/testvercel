@@ -169,8 +169,14 @@ function tampilkanDetail() {
         // 🧩 FIELD: FOTO (Base64 Saja, Tanpa Preview)
         // ===============================
         else if (q.type === "foto") {
-          const savedBase64 = saved || ""; // Data dari JSON langsung (base64)
-          const hasImage = savedBase64.length > 0;
+          // Cek langsung ke currentData (data terbaru), bukan saved lama
+          const existingPhoto = currentData.find(
+            (d) => d.question_id === q.question_id
+          );
+          const hasImage =
+            existingPhoto &&
+            existingPhoto.value &&
+            existingPhoto.value.length > 0;
 
           inputField = `
             <div class="photo-upload-wrapper" style="margin-top:8px;">
