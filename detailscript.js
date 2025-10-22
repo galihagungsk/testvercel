@@ -443,6 +443,8 @@ function tampilkanDetail() {
     dataForm.data = currentData;
     const payload = {
       submission_id: submission.submission_id,
+      status: "update",
+      type: "from",
       data: dataForm,
       // data: LZString.compressToUTF16(JSON.stringify(dataForm)),
       // data: cekData,
