@@ -450,7 +450,7 @@ function tampilkanDetail() {
     if (window.flutter_inappwebview) {
       window.flutter_inappwebview.callHandler(
         "FlutterChannel",
-        JSON.stringify({ status: "update", type: "from", data })
+        JSON.stringify({ status: "update", type: "form", data })
       );
       alert("✅ Data berhasil dikirim ke Flutter!");
     } else {
