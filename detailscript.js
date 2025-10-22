@@ -166,42 +166,29 @@ function tampilkanDetail() {
         }
 
         // ===============================
-        // 🧩 FIELD: FOTO (Compact Format)
+        // 🧩 FIELD: FOTO (Base64 Saja, Tanpa Preview)
         // ===============================
         else if (q.type === "foto") {
-          const parts = (saved || "").split("|");
-          const savedFileName = parts[0] || "";
-          const savedFileType = parts[1] || "";
-          const savedBase64 = parts[2] || "";
+          const savedBase64 = saved || ""; // Data dari JSON langsung (base64)
           const hasImage = savedBase64.length > 0;
 
           inputField = `
             <div class="photo-upload-wrapper" style="margin-top:8px;">
               <input type="file" id="${
                 q.code
-              }" accept="image/*" capture="environment" data-question-id="${
-            q.question_id
-          }" style="display:none"/>
-              <button type="button" class="btn-camera" data-target="${
-                q.code
-              }" style="background:#2196f3;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;">
+              }" accept="image/*" capture="environment"
+                data-question-id="${q.question_id}" style="display:none"/>
+
+              <button type="button" class="btn-camera" data-target="${q.code}"
+                style="background:#2196f3;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;">
                 📷 Ambil Foto
               </button>
+
               <p class="file-info" style="font-size:12px;color:${
                 hasImage ? "green" : "#999"
               };margin-top:4px;">
-                ${
-                  hasImage
-                    ? `📷 ${savedFileName || "Sudah diunggah"}`
-                    : "Belum ada foto"
-                }
+                ${hasImage ? "📷 Foto sudah tersimpan" : "Belum ada foto"}
               </p>
-              ${
-                hasImage
-                  ? `<img class="preview-thumb" src="data:${savedFileType};base64,${savedBase64}"
-                     style="max-width:140px;border-radius:8px;margin-top:6px;display:block;" />`
-                  : ""
-              }
             </div>
           `;
         }
