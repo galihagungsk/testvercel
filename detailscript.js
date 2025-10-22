@@ -169,7 +169,7 @@ function tampilkanDetail() {
         // 🧩 FIELD: FOTO (Base64 Saja, Tanpa Preview)
         // ===============================
         else if (q.type === "foto") {
-          // ✅ Cek langsung dari currentData agar status update dinamis
+          // ✅ FIXED: Status tampil langsung dari currentData bukan dari saved lama
           const existingPhoto = currentData.find(
             (d) => d.question_id === q.question_id
           );
@@ -183,7 +183,7 @@ function tampilkanDetail() {
               <input type="file" id="${
                 q.code
               }" accept="image/*" capture="environment"
-                data-question-id="${q.question_id}" style="display:none"/>
+                data-question-id="${q.question_id}" style="display:none" />
 
               <button type="button" class="btn-camera" data-target="${q.code}"
                 style="background:#2196f3;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;">
@@ -263,14 +263,12 @@ function tampilkanDetail() {
   });
 
   // ✅ Perbaikan besar untuk ambil foto & masuk ke cekData
+  // ✅ Event ketika foto dipilih/upload
   formContainer.querySelectorAll('input[type="file"]').forEach((fileInput) => {
     fileInput.addEventListener("change", (e) => {
       try {
         const file = e.target.files[0];
-        if (!file) {
-          console.warn("⚠️ Tidak ada file yang dipilih.");
-          return;
-        }
+        if (!file) return console.warn("⚠️ Tidak ada file yang dipilih.");
 
         const reader = new FileReader();
         const qid = parseInt(e.target.getAttribute("data-question-id"));
@@ -285,12 +283,12 @@ function tampilkanDetail() {
             const canvas = document.createElement("canvas");
             canvas.width = img.width;
             canvas.height = img.height;
+            canvas.getContext("2d").drawImage(img, 0, 0);
 
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
-
-            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
-            const compressedBase64 = compressedDataUrl.split(",")[1];
+            // Kompres ke JPEG base64
+            const compressedBase64 = canvas
+              .toDataURL("image/jpeg", 0.7)
+              .split(",")[1];
             const loc = await getUserLocation();
 
             // ✅ Simpan/update ke currentData
@@ -302,25 +300,22 @@ function tampilkanDetail() {
                 submission_id: submission.submission_id,
                 question_id: qid,
                 value: compressedBase64,
-                lat: loc ? loc.lat : null,
-                lon: loc ? loc.lon : null,
+                lat: loc?.lat ?? null,
+                lon: loc?.lon ?? null,
               });
             }
 
-            console.log("✅ Foto disimpan:", {
-              size: compressedBase64.length,
-              question_id: qid,
-            });
+            console.log("✅ Foto disimpan ke currentData:", currentData);
 
-            // ✅ Update status di UI
+            // ✅ Update status UI langsung TANPA reload
             infoEl.textContent = "📷 Foto sudah tersimpan";
             infoEl.style.color = "green";
           };
         };
 
         reader.readAsDataURL(file);
-      } catch (error) {
-        console.error("❌ Gagal memproses file foto:", error);
+      } catch (err) {
+        console.error("❌ Gagal memproses file foto:", err);
       }
     });
   });
