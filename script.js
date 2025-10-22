@@ -124,6 +124,8 @@ function getDataFromSession(key) {
 // ===============================
 function tampilkanHasil(dataProcess, dataForm, container) {
   console.log("🌐 Menampilkan hasil submission...");
+  console.log("dataForm:", dataForm);
+  console.log("dataProcess:", dataProcess);
   if (!dataForm || !dataProcess) {
     console.warn("⚠️ Data form atau process tidak tersedia");
     container.innerHTML = "<p>⚠️ Tidak ada data untuk ditampilkan.</p>";
