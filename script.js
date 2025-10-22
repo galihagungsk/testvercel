@@ -90,8 +90,8 @@ function receiveDataFromFlutter(data) {
         LZString.compressToUTF16(JSON.stringify(data.form))
       );
       console.log("✅ Data dikompresi & disimpan di sessionStorage");
-      console.log("data.process:", data.process);
-      console.log("data.form:", data.form);
+      console.log("data:", data);
+
       tampilkanHasil(data.process, data.form, container);
       console.log("✅ Menampilkan data submission dari Flutter");
     } else {
