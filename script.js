@@ -65,7 +65,7 @@ function receiveDataFromFlutter(data) {
     if (!container) return;
 
     // ✅ Tampilkan hasil ke halaman (pakai data asli, bukan yang sudah compressed)
-    if (data && (data.process || data.form)) {
+    if (data) {
       // Pastikan data berbentuk objek
       if (typeof data === "string") data = JSON.parse(data);
 
