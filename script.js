@@ -128,40 +128,42 @@ function tampilkanHasil(dataProcess, dataForm, container) {
     return;
   }
 
-  let html2 = "";
-  for (const submission of dataProcess) {
-    html2 += `
-      <div class="card" data-id="${submission.submission_id}">
-        <div class="card-header">
-          <div class="id-info">
-            ${submission.submission_id || "-"}<br>
-            <small>${submission.submit_message || ""}</small>
-          </div>
-          <div class="time-info">
-            <strong>${submission.submit_date || "-"}</strong><br>
-            <small>97 Hari 2 jam 10 menit</small>
-          </div>
-        </div>
+  let html2 = `<div class="id-info">
+            <small>"TESTING</small>
+          </div>`;
+  // for (const submission of dataProcess) {
+  //   html2 += `
+  //     <div class="card" data-id="${submission.submission_id}">
+  //       <div class="card-header">
+  //         <div class="id-info">
+  //           ${submission.submission_id || "-"}<br>
+  //           <small>${submission.submit_message || ""}</small>
+  //         </div>
+  //         <div class="time-info">
+  //           <strong>${submission.submit_date || "-"}</strong><br>
+  //           <small>97 Hari 2 jam 10 menit</small>
+  //         </div>
+  //       </div>
 
-        <div class="section">
-          <span class="label">NAMA LENGKAP PEMOHON</span><br>
-          <span class="value">${submission.data?.[0]?.value || "-"}</span>
-        </div>
+  //       <div class="section">
+  //         <span class="label">NAMA LENGKAP PEMOHON</span><br>
+  //         <span class="value">${submission.data?.[0]?.value || "-"}</span>
+  //       </div>
 
-        <div class="section">
-          <span class="label">NOMOR TELEPON/WHATSAPP PEMOHON</span><br>
-          <span class="value">${submission.data?.[1]?.value || "-"}</span>
-        </div>
+  //       <div class="section">
+  //         <span class="label">NOMOR TELEPON/WHATSAPP PEMOHON</span><br>
+  //         <span class="value">${submission.data?.[1]?.value || "-"}</span>
+  //       </div>
 
-        <div class="section">
-          <span class="label">CEK JARAK ALAMAT DOMISILI</span><br>
-          <span class="value">${submission.data?.[2]?.value || "-"}</span>
-        </div>
+  //       <div class="section">
+  //         <span class="label">CEK JARAK ALAMAT DOMISILI</span><br>
+  //         <span class="value">${submission.data?.[2]?.value || "-"}</span>
+  //       </div>
 
-        <div class="footer">ambil alih ${submission.device_model || "-"}</div>
-      </div>
-    `;
-  }
+  //       <div class="footer">ambil alih ${submission.device_model || "-"}</div>
+  //     </div>
+  //   `;
+  // }
 
   container.innerHTML = html2;
 
