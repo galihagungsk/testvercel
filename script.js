@@ -90,6 +90,8 @@ function receiveDataFromFlutter(data) {
         LZString.compressToUTF16(JSON.stringify(data.form))
       );
       console.log("✅ Data dikompresi & disimpan di sessionStorage");
+      console.log("data.process:", data.process);
+      console.log("data.form:", data.form);
       tampilkanHasil(data.process, data.form, container);
       console.log("✅ Menampilkan data submission dari Flutter");
     } else {
@@ -124,8 +126,6 @@ function getDataFromSession(key) {
 // ===============================
 function tampilkanHasil(dataProcess, dataForm, container) {
   console.log("🌐 Menampilkan hasil submission...");
-  console.log("dataForm:", dataForm);
-  console.log("dataProcess:", dataProcess);
   if (!dataForm || !dataProcess) {
     console.warn("⚠️ Data form atau process tidak tersedia");
     container.innerHTML = "<p>⚠️ Tidak ada data untuk ditampilkan.</p>";
