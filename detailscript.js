@@ -443,7 +443,8 @@ function tampilkanDetail() {
     dataForm.data = currentData;
     const payload = {
       submission_id: submission.submission_id,
-      data: LZString.compressToUTF16(JSON.stringify(dataForm)),
+      data: dataForm,
+      // data: LZString.compressToUTF16(JSON.stringify(dataForm)),
       // data: cekData,
     };
     if (window.flutter_inappwebview) {
