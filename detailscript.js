@@ -441,10 +441,8 @@ function tampilkanDetail() {
 
   btnSave.addEventListener("click", () => {
     dataForm.data = currentData;
-    const payload = {
+    const data = {
       submission_id: submission.submission_id,
-      status: "update",
-      type: "from",
       data: dataForm,
       // data: LZString.compressToUTF16(JSON.stringify(dataForm)),
       // data: cekData,
@@ -452,11 +450,11 @@ function tampilkanDetail() {
     if (window.flutter_inappwebview) {
       window.flutter_inappwebview.callHandler(
         "FlutterChannel",
-        JSON.stringify({ type: "onFormSubmit", payload })
+        JSON.stringify({ status: "update", type: "from", data })
       );
       alert("✅ Data berhasil dikirim ke Flutter!");
     } else {
-      console.log("⚠️ Tidak di dalam Flutter, data hasil form:", payload);
+      console.log("⚠️ Tidak di dalam Flutter, data hasil form:", data);
     }
   });
 
