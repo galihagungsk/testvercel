@@ -443,12 +443,12 @@ function tampilkanDetail() {
     dataForm.data = currentData;
     const payload = {
       submission_id: submission.submission_id,
-      data: dataForm,
+      data: LZString.compressToUTF16(JSON.stringify(dataForm)),
       // data: cekData,
     };
     if (window.flutter_inappwebview) {
       window.flutter_inappwebview.callHandler(
-        "FlutterChannel",
+        "DataToFlutter",
         JSON.stringify({ type: "onFormSubmit", payload })
       );
       alert("✅ Data berhasil dikirim ke Flutter!");
