@@ -169,7 +169,7 @@ function tampilkanDetail() {
         // 🧩 FIELD: FOTO (Base64 Saja, Tanpa Preview)
         // ===============================
         else if (q.type === "foto") {
-          // Cek langsung ke currentData (data terbaru), bukan saved lama
+          // ✅ Cek langsung dari currentData agar status update dinamis
           const existingPhoto = currentData.find(
             (d) => d.question_id === q.question_id
           );
@@ -276,16 +276,12 @@ function tampilkanDetail() {
         const qid = parseInt(e.target.getAttribute("data-question-id"));
         const parent = e.target.closest(".photo-upload-wrapper");
         const infoEl = parent.querySelector(".file-info");
-        // const imgPreview =
-        //   parent.querySelector(".preview-thumb") ||
-        //   document.createElement("img");
 
         reader.onload = () => {
           const img = new Image();
           img.src = reader.result;
 
           img.onload = async () => {
-            // Gunakan ukuran asli gambar
             const canvas = document.createElement("canvas");
             canvas.width = img.width;
             canvas.height = img.height;
@@ -293,12 +289,11 @@ function tampilkanDetail() {
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0);
 
-            // 🔥 Kompres hanya kualitas, tanpa resize
-            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7); // 70% kualitas
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
             const compressedBase64 = compressedDataUrl.split(",")[1];
             const loc = await getUserLocation();
 
-            // Simpan ke currentData
+            // ✅ Simpan/update ke currentData
             const existing = currentData.find((d) => d.question_id === qid);
             if (existing) {
               existing.value = compressedBase64;
@@ -310,16 +305,16 @@ function tampilkanDetail() {
                 lat: loc ? loc.lat : null,
                 lon: loc ? loc.lon : null,
               });
-              // Ubah status di UI
-              infoEl.textContent = "📷 Sudah diunggah";
-              infoEl.style.color = "green";
             }
 
-            // Log ukuran sebelum & sesudah kompres
-            console.log("✅ Foto dikompress tanpa resize:", {
-              originalSize: reader.result.length,
-              compressedSize: compressedBase64.length,
+            console.log("✅ Foto disimpan:", {
+              size: compressedBase64.length,
+              question_id: qid,
             });
+
+            // ✅ Update status di UI
+            infoEl.textContent = "📷 Foto sudah tersimpan";
+            infoEl.style.color = "green";
           };
         };
 
