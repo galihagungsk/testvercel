@@ -123,6 +123,7 @@ function getDataFromSession(key) {
 // 🧱 Tampilkan daftar submission
 // ===============================
 function tampilkanHasil(dataProcess, dataForm, container) {
+  console.log("🌐 Menampilkan hasil submission...");
   if (!dataForm || !dataProcess) {
     console.warn("⚠️ Data form atau process tidak tersedia");
     container.innerHTML = "<p>⚠️ Tidak ada data untuk ditampilkan.</p>";
