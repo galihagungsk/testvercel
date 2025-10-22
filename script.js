@@ -62,13 +62,18 @@ function receiveDataFromFlutter(data) {
     console.log("📩 Menerima data dari Flutter:", data);
 
     const container = document.getElementById("flutter-data-container");
+
     if (!container) return;
 
-    // ✅ Tampilkan hasil ke halaman (pakai data asli, bukan yang sudah compressed)
-    if (data) {
-      // Pastikan data berbentuk objek
-      if (typeof data === "string") data = JSON.parse(data);
+    if (typeof data === "string") data = JSON.parse(data);
+    // Debug isi semua field
+    console.log("➤ pertanyaan:", data.pertanyaan);
+    console.log("➤ opsi_jawaban:", data.opsi_jawaban);
+    console.log("➤ process:", data.process);
+    console.log("➤ form:", data.form);
 
+    // ✅ Tampilkan hasil ke halaman (pakai data asli, bukan yang sudah compressed)
+    if (data && (data.process || data.form)) {
       /*
        * ✅ COMPRESS JSON sebelum disimpan ke sessionStorage
        * Gunakan UTF16 agar aman di sessionStorage
@@ -90,7 +95,8 @@ function receiveDataFromFlutter(data) {
         LZString.compressToUTF16(JSON.stringify(data.form))
       );
       console.log("✅ Data dikompresi & disimpan di sessionStorage");
-      console.log("data:", data.form);
+      console.log("dataForm:", data.form);
+      console.log("dataProcess:", data.process);
 
       tampilkanHasil(data.process, data.form, container);
       console.log("✅ Menampilkan data submission dari Flutter");
