@@ -310,6 +310,7 @@ function tampilkanDetail() {
             // ✅ Update status UI langsung TANPA reload
             infoEl.textContent = "📷 Foto sudah tersimpan";
             infoEl.style.color = "green";
+            refreshAllPhotoStatus();
           };
         };
 
@@ -334,6 +335,7 @@ function tampilkanDetail() {
     });
   }
   evaluateVisibilityAll();
+  refreshAllPhotoStatus();
 
   formContainer.querySelectorAll("select").forEach((sel) => {
     sel.addEventListener("change", async (e) => {
@@ -442,6 +444,23 @@ function tampilkanDetail() {
 
   container.querySelector("#btnBack").addEventListener("click", () => {
     window.location.href = "index.html";
+  });
+}
+
+function refreshAllPhotoStatus() {
+  document.querySelectorAll(".photo-upload-wrapper").forEach((wrapper) => {
+    const fileInput = wrapper.querySelector('input[type="file"]');
+    const infoEl = wrapper.querySelector(".file-info");
+    const qid = parseInt(fileInput.dataset.questionId);
+
+    const existing = currentData.find((d) => d.question_id === qid);
+    if (existing && existing.value && existing.value.length > 0) {
+      infoEl.textContent = "📷 Foto sudah tersimpan";
+      infoEl.style.color = "green";
+    } else {
+      infoEl.textContent = "Belum ada foto";
+      infoEl.style.color = "#999";
+    }
   });
 }
 
